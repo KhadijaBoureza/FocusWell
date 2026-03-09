@@ -1,6 +1,6 @@
-# FocusWell Dashboard
+# FocusHub Dashboard
 
-FocusWell is a productivity dashboard designed to help users manage tasks, focus sessions, reminders, notes, and personal reflections in one unified interface.  
+FocusHub is a productivity dashboard designed to help users manage tasks, focus sessions, reminders, notes, and personal reflections in one unified interface.  
 The application provides tools such as a Kanban board, Pomodoro timer, calendar view, and analytics to help users maintain productivity and organization.
 
 ---
@@ -82,7 +82,7 @@ Dashboard
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/focuswell-dashboard.git
+git clone https://github.com/KhadijaBoureza/Dashboard.git
 ```
 
 ### 2. Navigate to the project directory
