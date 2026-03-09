@@ -44,7 +44,7 @@ function DashboardSidebar({ activeTab, onTabChange }: SidebarProps) {
         </div>
 
         {!collapsed && (
-          <span className="font-semibold text-sm">FocusWell</span>
+          <span className="font-semibold text-sm">FocusHub</span>
         )}
       </div>
 
