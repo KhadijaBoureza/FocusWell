@@ -96,7 +96,7 @@ function Index() {
             <h1 className="text-xl md:text-2xl font-bold">
               {activeTab === "dashboard" ? (
                 <>
-                  {greeting} 👋
+                  {greeting} c
                 </>
               ) : (
                 <span className="capitalize">
