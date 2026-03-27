@@ -1,8 +1,13 @@
 import { useState } from "react";
 import { Plus, Trash2, Edit3, X, Save } from "lucide-react";
 import { Note } from "@/types/dashboard";
-import { mockNotes } from "@/data/mockData";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
+
+// ❌ OLD (Phase 1 - localStorage)
+
+// import { mockNotes } from "@/data/mockData";
+// import { useLocalStorage } from "@/hooks/useLocalStorage";
+
+import { useEffect } from "react";
 
 const colorMap: Record<string, string> = {
   violet: "border-l-purple-500",
@@ -11,7 +16,8 @@ const colorMap: Record<string, string> = {
 };
 
 function NotesWidget() {
-  const [notes, setNotes] = useLocalStorage<Note[]>("dashboard-notes", mockNotes);
+  // const [notes, setNotes] = useLocalStorage<Note[]>("dashboard-notes", mockNotes);
+  const [notes, setNotes] = useState<Note[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
@@ -20,31 +26,112 @@ function NotesWidget() {
   const colors = ["violet", "blue", "cyan"];
   const [selectedColor, setSelectedColor] = useState("violet");
 
-  function addNote() {
+  useEffect(() => {
+    fetch("http://localhost:5000/notes")
+      .then((res) => res.json())
+      .then((data) => setNotes(data))
+      .catch((err) => console.error(err));
+  }, []);
+
+  // ❌ OLD addNote (local version) 
+  // function addNote() {
+  //   if (!title.trim()) return;
+
+  //   const note: Note = {
+  //     id: Date.now().toString(),
+  //     title,
+  //     content,
+  //     color: selectedColor,
+  //     createdAt: new Date().toISOString().split("T")[0],
+  //   };
+
+  //   async function addNote() {
+  //   if (!title.trim()) return;
+
+  //   const res = await fetch("http://localhost:5000/notes", {
+  //     method: "POST",
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //     },
+  //     body: JSON.stringify({
+  //       title,
+  //       content,
+  //       color: selectedColor,
+  //     }),
+  //   });
+
+  //   const newNote = await res.json();
+
+  //   setNotes([newNote, ...notes]);
+  //   setTitle("");
+  //   setContent("");
+  //   setIsAdding(false);
+  // }
+
+  //     setNotes([note, ...notes]);
+  //     setTitle("");
+  //     setContent("");
+  //     setIsAdding(false);
+  //   }
+
+  // function deleteNote(id: string) {
+  //   setNotes(notes.filter((n) => n.id !== id));
+  // }
+
+
+  // ✅ NEW addNote → sends to backend
+
+  async function addNote() {
     if (!title.trim()) return;
 
-    const note: Note = {
-      id: Date.now().toString(),
-      title,
-      content,
-      color: selectedColor,
-      createdAt: new Date().toISOString().split("T")[0],
-    };
+    const res = await fetch("http://localhost:5000/notes", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title,
+        content,
+        color: selectedColor,
+      }),
+    });
 
-    setNotes([note, ...notes]);
+    const newNote = await res.json();
+
+    setNotes((prev) => [newNote, ...prev]);
+
     setTitle("");
     setContent("");
     setIsAdding(false);
   }
 
-  function deleteNote(id: string) {
-    setNotes(notes.filter((n) => n.id !== id));
+  async function deleteNote(id: string) {
+    const res = await fetch(`http://localhost:5000/notes/${id}`, {
+      method: "DELETE",
+    });
+
+    if (res.ok) {
+      setNotes((prev) => prev.filter((n) => n.id !== id));
+    }
   }
 
-  function saveEdit(id: string) {
-    setNotes(notes.map((n) => (n.id === id ? { ...n, title, content } : n)));
+  async function saveEdit(id: string) {
+  const res = await fetch(`http://localhost:5000/notes/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ title, content }),
+  });
+
+  if (res.ok) {
+    setNotes((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, title, content } : n))
+    );
+
     setEditingId(null);
   }
+}
 
   function startEdit(note: Note) {
     setEditingId(note.id);
@@ -94,17 +181,15 @@ function NotesWidget() {
                 <button
                   key={c}
                   onClick={() => setSelectedColor(c)}
-                  className={`w-5 h-5 rounded-full border-2 transition ${
-                    c === "violet"
+                  className={`w-5 h-5 rounded-full border-2 transition ${c === "violet"
                       ? "bg-purple-500"
                       : c === "blue"
-                      ? "bg-blue-500"
-                      : "bg-cyan-500"
-                  } ${
-                    selectedColor === c
+                        ? "bg-blue-500"
+                        : "bg-cyan-500"
+                    } ${selectedColor === c
                       ? "border-foreground scale-110"
                       : "border-transparent"
-                  }`}
+                    }`}
                 />
               ))}
             </div>
@@ -124,9 +209,8 @@ function NotesWidget() {
         {notes.map((note) => (
           <div
             key={note.id}
-            className={`border-l-2 ${
-              colorMap[note.color] || "border-l-purple-500"
-            } bg-muted/20 rounded-r-md p-3 group`}
+            className={`border-l-2 ${colorMap[note.color] || "border-l-purple-500"
+              } bg-muted/20 rounded-r-md p-3 group`}
           >
             {editingId === note.id ? (
               <div className="space-y-2">
