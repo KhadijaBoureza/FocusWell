@@ -1,3 +1,6 @@
+require("./db");
+const Note = require("./models/Note");
+
 const express = require("express");
 const cors = require("cors");
 
@@ -67,45 +70,32 @@ let notes = [
 ];
 
 // GET all notes
-app.get("/notes", (req, res) => {
+app.get("/notes", async (req, res) => {
+  const notes = await Note.find().sort({ _id: -1 });
   res.json(notes);
 });
 
 // ADD note
-app.post("/notes", (req, res) => {
-  const newNote = {
-  id: Date.now().toString(),
-  title: req.body.title,
-  content: req.body.content,
-  color: req.body.color || "violet",
-  createdAt: new Date().toISOString().split("T")[0],
-};
-  
+app.post("/notes", async (req, res) => {
+  const newNote = new Note({
+    ...req.body,
+    createdAt: new Date().toISOString().split("T")[0],
+  });
 
-  notes.push(newNote);
+  await newNote.save();
 
   res.json(newNote);
 });
 
 // DELETE note
-
-app.delete("/notes/:id", (req, res) => {
-  const id = req.params.id;
-
-  notes = notes.filter(note => note.id !== id);
-
+app.delete("/notes/:id", async (req, res) => {
+  await Note.findByIdAndDelete(req.params.id);
   res.json({ success: true });
 });
 
 // UPDATE not
-app.put("/notes/:id", (req, res) => {
-  const id = req.params.id;
-  const { title, content } = req.body;
-
-  notes = notes.map(note =>
-    note.id === id ? { ...note, title, content } : note
-  );
-
+app.put("/notes/:id", async (req, res) => {
+  await Note.findByIdAndUpdate(req.params.id, req.body);
   res.json({ success: true });
 });
 
