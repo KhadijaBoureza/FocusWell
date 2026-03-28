@@ -1,8 +1,10 @@
 require("./db");
-const Note = require("./models/Note");
 
 const express = require("express");
 const cors = require("cors");
+
+const Note = require("./models/Note");
+const Task = require("./models/Task");
 
 const app = express();
 
@@ -17,41 +19,47 @@ let tasks = [
 ];
 
 // GET all tasks
-app.get("/tasks", (req, res) => {
+app.get("/tasks", async (req, res) => {
+  const tasks = await Task.find().sort({ _id: -1 });
   res.json(tasks);
 });
 
 // ADD a task
-app.post("/tasks", (req, res) => {
-  const newTask = {
-    id: Date.now(),
-    title: req.body.title,
-    column: req.body.column || "todo"
-  };
+app.post("/tasks", async (req, res) => {
+  const newTask = new Task({
+    ...req.body,
+    completed: req.body.column === "done",
+    createdAt: new Date().toISOString().split("T")[0],
+  });
 
-  tasks.push(newTask);
+  await newTask.save();
 
   res.json(newTask);
 });
 
-// UPDATE a task (move between columns)
-app.put("/tasks/:id", (req, res) => {
-  const id = parseInt(req.params.id);
-  const { column } = req.body;
+// UPDATE a task 
+app.put("/tasks/:id", async (req, res) => {
+  const updates = {
+    ...req.body,
+  };
 
-  tasks = tasks.map(task =>
-    task.id === id ? { ...task, column } : task
+  // Auto-handle completed if column is updated
+  if (req.body.column) {
+    updates.completed = req.body.column === "done";
+  }
+
+  const updatedTask = await Task.findByIdAndUpdate(
+    req.params.id,
+    updates,
+    { new: true } // returns updated document
   );
 
-  res.json({ success: true });
+  res.json(updatedTask);
 });
 
 // DELETE a task
-app.delete("/tasks/:id", (req, res) => {
-  const id = parseInt(req.params.id);
-
-  tasks = tasks.filter(task => task.id !== id);
-
+app.delete("/tasks/:id", async (req, res) => {
+  await Task.findByIdAndDelete(req.params.id);
   res.json({ success: true });
 });
 
