@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, GripVertical, Trash2, Check } from "lucide-react";
 import { Task, KanbanColumn } from "@/types/dashboard";
-import { mockTasks } from "@/data/mockData";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
+
+//  import { mockTasks } from "@/data/mockData";
+// import { useLocalStorage } from "@/hooks/useLocalStorage";
+
 
 const COLUMNS: { id: KanbanColumn; title: string }[] = [
   { id: "todo", title: "To Do" },
@@ -17,36 +19,92 @@ const priorityColors: Record<string, string> = {
 };
 
 function KanbanBoard() {
-  const [tasks, setTasks] = useLocalStorage<Task[]>("kanban-tasks", mockTasks);
+  // const [tasks, setTasks] = useLocalStorage<Task[]>("kanban-tasks", mockTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [addingTo, setAddingTo] = useState<KanbanColumn | null>(null);
+  // const [draggedTask, setDraggedTask] = useState<string | null>(null);
   const [draggedTask, setDraggedTask] = useState<string | null>(null);
 
-  function addTask(column: KanbanColumn) {
-    if (!newTaskTitle.trim()) return;
 
-    const task: Task = {
-      id: Date.now().toString(),
+// FETCH tasks from backend
+useEffect(() => {
+  fetch("http://localhost:5000/tasks")
+    .then(res => res.json())
+    .then(data => setTasks(data))
+    .catch(err => console.error(err));
+}, []);
+
+  // function addTask(column: KanbanColumn) {
+  //   if (!newTaskTitle.trim()) return;
+
+  //   const task: Task = {
+  //     id: Date.now().toString(),
+  //     title: newTaskTitle,
+  //     completed: column === "done",
+  //     priority: "medium",
+  //     column,
+  //     createdAt: new Date().toISOString().split("T")[0],
+  //   };
+
+  //   setTasks([...tasks, task]);
+  //   setNewTaskTitle("");
+  //   setAddingTo(null);
+  // }
+  
+  async function addTask(column: KanbanColumn) {
+  if (!newTaskTitle.trim()) return;
+
+  const res = await fetch("http://localhost:5000/tasks", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
       title: newTaskTitle,
-      completed: column === "done",
-      priority: "medium",
       column,
-      createdAt: new Date().toISOString().split("T")[0],
-    };
+    }),
+  });
 
-    setTasks([...tasks, task]);
-    setNewTaskTitle("");
-    setAddingTo(null);
+  const newTask = await res.json();
+
+  setTasks((prev) => [...prev, newTask]);
+  setNewTaskTitle("");
+  setAddingTo(null);
+}
+
+async function deleteTask(id: string) {
+    const res = await fetch(`http://localhost:5000/tasks/${id}`, {
+      method: "DELETE",
+    });
+
+    if (res.ok) {
+      setTasks((prev) => prev.filter((t) => t._id !== id));
+    }
   }
 
-  function deleteTask(id: string) {
-    setTasks(tasks.filter((t) => t.id !== id));
-  }
+  // function moveTask(taskId: string, newColumn: KanbanColumn) {
+  //   setTasks(
+  //     tasks.map((t) =>
+  //       t.id === taskId
+  //         ? { ...t, column: newColumn, completed: newColumn === "done" }
+  //         : t
+  //     )
+  //   );
+  // }
+  
+    async function moveTask(taskId: string, newColumn: KanbanColumn) {
+    await fetch(`http://localhost:5000/tasks/${taskId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ column: newColumn }),
+    });
 
-  function moveTask(taskId: string, newColumn: KanbanColumn) {
-    setTasks(
-      tasks.map((t) =>
-        t.id === taskId
+    setTasks((prev) =>
+      prev.map((t) =>
+        t._id === taskId
           ? { ...t, column: newColumn, completed: newColumn === "done" }
           : t
       )
@@ -62,7 +120,7 @@ function KanbanBoard() {
   }
 
   function handleDrop(column: KanbanColumn) {
-    if (draggedTask) {
+    if (draggedTask !== null) {
       moveTask(draggedTask, column);
       setDraggedTask(null);
     }
@@ -119,11 +177,11 @@ function KanbanBoard() {
                 .filter((t) => t.column === col.id)
                 .map((task) => (
                   <div
-                    key={task.id}
+                    key={task._id}
                     draggable
-                    onDragStart={() => handleDragStart(task.id)}
+                    onDragStart={() => handleDragStart(task._id)}
                     className={`group bg-card border border-border rounded-md p-3 cursor-grab active:cursor-grabbing hover:border-primary/40 transition ${
-                      draggedTask === task.id ? "opacity-50" : ""
+                      draggedTask === task._id ? "opacity-50" : ""
                     }`}
                   >
                     <div className="flex items-start gap-2">
@@ -155,7 +213,7 @@ function KanbanBoard() {
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         {col.id !== "done" && (
                           <button
-                            onClick={() => moveTask(task.id, "done")}
+                            onClick={() => moveTask(task._id, "done")}
                             className="p-1 text-green-600 hover:text-green-500"
                           >
                             <Check size={14} />
@@ -163,7 +221,7 @@ function KanbanBoard() {
                         )}
 
                         <button
-                          onClick={() => deleteTask(task.id)}
+                          onClick={() => deleteTask(task._id)}
                           className="p-1 text-destructive hover:text-destructive/80"
                         >
                           <Trash2 size={14} />
