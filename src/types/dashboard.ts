@@ -1,5 +1,5 @@
 /*
-  Core data models used across the FocusWell dashboard.
+  Core data models used across the FocusHub dashboard.
   These types define the structure for tasks, notes and reminders.
 */
 
@@ -10,7 +10,7 @@ export type TaskPriority = "low" | "medium" | "high";
 export type NoteColor = "violet" | "blue" | "cyan";
 
 export interface Task {
-  id: string;
+  _id: string;
   title: string;
   completed: boolean;
   priority: TaskPriority;
