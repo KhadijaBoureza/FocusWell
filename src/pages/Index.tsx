@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react"
 
+import { Task } from "@/types/dashboard";
 import DashboardSidebar from "../components/dashboard/DashboardSidebar";
 import MobileNav from "../components/dashboard/MobileNav";
 import ThemeToggle from "../components/dashboard/ThemeToggle";
@@ -13,6 +14,15 @@ import ThoughtOrganizer from "../components/dashboard/ThoughtOrganizer";
 import WeeklyAnalytics from "../components/dashboard/WeeklyAnalytics";
 
 function Index() {
+
+  const [tasks, setTasks] = useState<Task[]>([]);
+
+  useEffect(() => {
+    fetch("http://localhost:5000/tasks")
+      .then((res) => res.json())
+      .then((data) => setTasks(data))
+      .catch((err) => console.error(err));
+  }, []);
   const [activeTab, setActiveTab] = useState("dashboard");
 
   const hour = new Date().getHours();
@@ -24,7 +34,7 @@ function Index() {
   const renderContent = () => {
     switch (activeTab) {
       case "tasks":
-        return <KanbanBoard />;
+        return <KanbanBoard tasks={tasks} setTasks={setTasks} />;
 
       case "timer":
         return (
@@ -55,11 +65,11 @@ function Index() {
       default:
         return (
           <div className="space-y-6">
-            <StatsBar />
+            <StatsBar tasks={tasks} />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
-                <KanbanBoard />
+                <KanbanBoard tasks={tasks} setTasks={setTasks} />
               </div>
 
               <div className="space-y-6">
