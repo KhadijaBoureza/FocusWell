@@ -1,48 +1,84 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Bell, Plus, X, Check, Clock } from "lucide-react";
-import { Reminder } from "@/types/dashboard";
-import { mockReminders } from "@/data/mockData";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
+
+interface Reminder {
+  _id: string;
+  title: string;
+  time: string;
+  date: string;
+  completed: boolean;
+}
 
 function RemindersWidget() {
-  const [reminders, setReminders] = useLocalStorage<Reminder[]>(
-    "dashboard-reminders",
-    mockReminders
-  );
-
+  const [reminders, setReminders] = useState<Reminder[]>([]);
   const [isAdding, setIsAdding] = useState(false);
-  const [text, setText] = useState("");
+  const [title, setTitle] = useState("");
   const [time, setTime] = useState("09:00");
 
-  function addReminder() {
-    if (!text.trim()) return;
+  // FETCH reminders
+  useEffect(() => {
+    fetch("http://localhost:5000/reminders")
+      .then((res) => res.json())
+      .then((data) => setReminders(data))
+      .catch((err) => console.error(err));
+  }, []);
 
-    const reminder: Reminder = {
-      id: Date.now().toString(),
-      text,
-      time,
-      date: new Date().toISOString().split("T")[0],
-      completed: false,
-    };
+  // ADD reminder
+  async function addReminder() {
+    if (!title.trim()) return;
 
-    setReminders([...reminders, reminder]);
-    setText("");
+    const res = await fetch("http://localhost:5000/reminders", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title,
+        time,
+        date: new Date().toISOString().split("T")[0],
+      }),
+    });
+
+    const newReminder = await res.json();
+
+    setReminders((prev) => [...prev, newReminder]);
+    setTitle("");
     setTime("09:00");
     setIsAdding(false);
   }
 
-  function toggleReminder(id: string) {
-    setReminders(
-      reminders.map((r) =>
-        r.id === id ? { ...r, completed: !r.completed } : r
-      )
+  // TOGGLE completed
+  async function toggleReminder(reminder: Reminder) {
+    const res = await fetch(
+      `http://localhost:5000/reminders/${reminder._id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          completed: !reminder.completed,
+        }),
+      }
+    );
+
+    const updated = await res.json();
+
+    setReminders((prev) =>
+      prev.map((r) => (r._id === reminder._id ? updated : r))
     );
   }
 
-  function deleteReminder(id: string) {
-    setReminders(reminders.filter((r) => r.id !== id));
+  // DELETE reminder
+  async function deleteReminder(id: string) {
+    await fetch(`http://localhost:5000/reminders/${id}`, {
+      method: "DELETE",
+    });
+
+    setReminders((prev) => prev.filter((r) => r._id !== id));
   }
 
+  // SORT reminders
   const sortedReminders = [...reminders].sort((a, b) => {
     if (a.completed !== b.completed) return a.completed ? 1 : -1;
     return a.time.localeCompare(b.time);
@@ -68,26 +104,23 @@ function RemindersWidget() {
       {/* Add Reminder */}
       {isAdding && (
         <div className="mb-4 flex gap-2 items-end p-3 bg-muted/40 rounded-lg">
-          <div className="flex-1">
-            <input
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addReminder()}
-              placeholder="Reminder..."
-              className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-          </div>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Reminder..."
+            className="flex-1 border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground"
+          />
 
           <input
             type="time"
             value={time}
             onChange={(e) => setTime(e.target.value)}
-            className="border border-border rounded-md px-2 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            className="border border-border rounded-md px-2 py-2 text-sm bg-background text-foreground"
           />
 
           <button
             onClick={addReminder}
-            className="px-3 py-2 rounded-md bg-primary text-primary-foreground text-xs hover:opacity-90 transition"
+            className="px-3 py-2 rounded-md bg-primary text-primary-foreground text-xs hover:opacity-90"
           >
             Add
           </button>
@@ -98,16 +131,16 @@ function RemindersWidget() {
       <div className="space-y-2 max-h-[250px] overflow-y-auto">
         {sortedReminders.map((reminder) => (
           <div
-            key={reminder.id}
+            key={reminder._id}
             className={`flex items-center gap-3 p-2.5 rounded-md group transition ${
               reminder.completed
                 ? "opacity-50"
                 : "hover:bg-muted/40"
             }`}
           >
-            {/* Toggle */}
+            {/* Toggle checkbox */}
             <button
-              onClick={() => toggleReminder(reminder.id)}
+              onClick={() => toggleReminder(reminder)}
               className={`shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition ${
                 reminder.completed
                   ? "border-green-500 bg-green-500/20"
@@ -128,7 +161,7 @@ function RemindersWidget() {
                     : "text-foreground"
                 }`}
               >
-                {reminder.text}
+                {reminder.title}
               </p>
             </div>
 
@@ -140,7 +173,7 @@ function RemindersWidget() {
 
             {/* Delete */}
             <button
-              onClick={() => deleteReminder(reminder.id)}
+              onClick={() => deleteReminder(reminder._id)}
               className="p-1 text-destructive opacity-0 group-hover:opacity-100 transition"
             >
               <X size={14} />
