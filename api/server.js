@@ -5,6 +5,7 @@ const cors = require("cors");
 
 const Note = require("./models/Note");
 const Task = require("./models/Task");
+const Thought = require("./models/Thought");
 
 const app = express();
 
@@ -17,6 +18,8 @@ let tasks = [
   { id: 2, title: "Connect backend API", column: "inprogress" },
   { id: 3, title: "Deploy app", column: "done" }
 ];
+
+//Tasks
 
 // GET all tasks
 app.get("/tasks", async (req, res) => {
@@ -66,6 +69,7 @@ app.delete("/tasks/:id", async (req, res) => {
 const PORT = 5000;
 
 
+// Notes
 
 let notes = [
   {
@@ -110,4 +114,40 @@ app.put("/notes/:id", async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+});
+
+//Thoughts
+
+// Get all thoughts
+app.get("/thoughts", async (req, res) => {
+  const thoughts = await Thought.find().sort({ _id: -1 });
+  res.json(thoughts);
+});
+
+// Post Thought
+app.post("/thoughts", async (req, res) => {
+  const newThought = new Thought({
+    ...req.body,
+    createdAt: new Date().toISOString(),
+  });
+
+  await newThought.save();
+  res.json(newThought);
+});
+
+// Delete Thought
+app.delete("/thoughts/:id", async (req, res) => {
+  await Thought.findByIdAndDelete(req.params.id);
+  res.json({ success: true });
+});
+
+// Update Thought
+app.put("/thoughts/:id", async (req, res) => {
+  const updated = await Thought.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    { new: true }
+  );
+
+  res.json(updated);
 });
