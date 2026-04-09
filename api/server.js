@@ -6,6 +6,7 @@ const cors = require("cors");
 const Note = require("./models/Note");
 const Task = require("./models/Task");
 const Thought = require("./models/Thought");
+const Reminder = require("./models/Reminder");
 
 const app = express();
 
@@ -151,3 +152,61 @@ app.put("/thoughts/:id", async (req, res) => {
 
   res.json(updated);
 });
+
+// Reminders 
+
+//get reminders
+app.get("/reminders", async (req, res) => {
+  try {
+    const reminders = await Reminder.find().sort({ _id: -1 });
+    res.json(reminders);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// create reminders 
+
+app.post("/reminders", async (req, res) => {
+  try {
+    const newReminder = new Reminder({
+      title: req.body.title,
+      time: req.body.time,
+      date: req.body.date,
+      completed: false,
+      createdAt: new Date().toISOString(),
+    });
+
+    await newReminder.save();
+    res.json(newReminder);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+// update reminders 
+
+app.put("/reminders/:id", async (req, res) => {
+  try {
+    const updated = await Reminder.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// delete remeinders 
+app.delete("/reminders/:id", async (req, res) => {
+  try {
+    await Reminder.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
