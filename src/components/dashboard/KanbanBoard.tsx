@@ -1,10 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Plus, GripVertical, Trash2, Check } from "lucide-react";
 import { Task, KanbanColumn } from "@/types/dashboard";
-
-//  import { mockTasks } from "@/data/mockData";
-// import { useLocalStorage } from "@/hooks/useLocalStorage";
-
 
 const COLUMNS: { id: KanbanColumn; title: string }[] = [
   { id: "todo", title: "To Do" },
@@ -18,62 +14,41 @@ const priorityColors: Record<string, string> = {
   high: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
 };
 
-function KanbanBoard() {
-  // const [tasks, setTasks] = useLocalStorage<Task[]>("kanban-tasks", mockTasks);
-  const [tasks, setTasks] = useState<Task[]>([]);
+function KanbanBoard({
+  tasks,
+  setTasks,
+}: {
+  tasks: Task[];
+  setTasks: React.Dispatch<React.SetStateAction<Task[]>>;
+}) {
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [addingTo, setAddingTo] = useState<KanbanColumn | null>(null);
-  // const [draggedTask, setDraggedTask] = useState<string | null>(null);
   const [draggedTask, setDraggedTask] = useState<string | null>(null);
 
-
-// FETCH tasks from backend
-useEffect(() => {
-  fetch("http://localhost:5000/tasks")
-    .then(res => res.json())
-    .then(data => setTasks(data))
-    .catch(err => console.error(err));
-}, []);
-
-  // function addTask(column: KanbanColumn) {
-  //   if (!newTaskTitle.trim()) return;
-
-  //   const task: Task = {
-  //     id: Date.now().toString(),
-  //     title: newTaskTitle,
-  //     completed: column === "done",
-  //     priority: "medium",
-  //     column,
-  //     createdAt: new Date().toISOString().split("T")[0],
-  //   };
-
-  //   setTasks([...tasks, task]);
-  //   setNewTaskTitle("");
-  //   setAddingTo(null);
-  // }
-  
+  // ADD TASK
   async function addTask(column: KanbanColumn) {
-  if (!newTaskTitle.trim()) return;
+    if (!newTaskTitle.trim()) return;
 
-  const res = await fetch("http://localhost:5000/tasks", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      title: newTaskTitle,
-      column,
-    }),
-  });
+    const res = await fetch("http://localhost:5000/tasks", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: newTaskTitle,
+        column,
+      }),
+    });
 
-  const newTask = await res.json();
+    const newTask = await res.json();
 
-  setTasks((prev) => [...prev, newTask]);
-  setNewTaskTitle("");
-  setAddingTo(null);
-}
+    setTasks((prev) => [...prev, newTask]);
+    setNewTaskTitle("");
+    setAddingTo(null);
+  }
 
-async function deleteTask(id: string) {
+  // DELETE TASK
+  async function deleteTask(id: string) {
     const res = await fetch(`http://localhost:5000/tasks/${id}`, {
       method: "DELETE",
     });
@@ -83,17 +58,8 @@ async function deleteTask(id: string) {
     }
   }
 
-  // function moveTask(taskId: string, newColumn: KanbanColumn) {
-  //   setTasks(
-  //     tasks.map((t) =>
-  //       t.id === taskId
-  //         ? { ...t, column: newColumn, completed: newColumn === "done" }
-  //         : t
-  //     )
-  //   );
-  // }
-  
-    async function moveTask(taskId: string, newColumn: KanbanColumn) {
+  // MOVE TASK
+  async function moveTask(taskId: string, newColumn: KanbanColumn) {
     await fetch(`http://localhost:5000/tasks/${taskId}`, {
       method: "PUT",
       headers: {
@@ -138,7 +104,7 @@ async function deleteTask(id: string) {
             onDrop={() => handleDrop(col.id)}
             className="bg-muted/40 rounded-lg p-3 min-h-[220px]"
           >
-            {/* Column header */}
+            {/* HEADER */}
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold">
                 {col.title}
@@ -151,13 +117,13 @@ async function deleteTask(id: string) {
                 onClick={() =>
                   setAddingTo(addingTo === col.id ? null : col.id)
                 }
-                className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
+                className="p-1 rounded text-muted-foreground hover:text-foreground"
               >
                 <Plus size={16} />
               </button>
             </div>
 
-            {/* Add task input */}
+            {/* ADD INPUT */}
             {addingTo === col.id && (
               <div className="mb-3">
                 <input
@@ -165,13 +131,12 @@ async function deleteTask(id: string) {
                   onChange={(e) => setNewTaskTitle(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && addTask(col.id)}
                   placeholder="Task title..."
-                  autoFocus
-                  className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full border rounded px-2 py-1"
                 />
               </div>
             )}
 
-            {/* Task list */}
+            {/* TASKS */}
             <div className="space-y-2">
               {tasks
                 .filter((t) => t.column === col.id)
@@ -180,41 +145,29 @@ async function deleteTask(id: string) {
                     key={task._id}
                     draggable
                     onDragStart={() => handleDragStart(task._id)}
-                    className={`group bg-card border border-border rounded-md p-3 cursor-grab active:cursor-grabbing hover:border-primary/40 transition ${
+                    className={`p-3 border rounded cursor-grab ${
                       draggedTask === task._id ? "opacity-50" : ""
                     }`}
                   >
-                    <div className="flex items-start gap-2">
-                      <GripVertical
-                        size={14}
-                        className="text-muted-foreground mt-0.5 shrink-0"
-                      />
-
-                      <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start">
+                      <div>
                         <p
-                          className={`text-sm ${
-                            task.completed
-                              ? "line-through text-muted-foreground"
-                              : "text-foreground"
-                          }`}
+                          className={
+                            task.completed ? "line-through text-gray-400" : ""
+                          }
                         >
                           {task.title}
                         </p>
 
-                        <span
-                          className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-medium ${
-                            priorityColors[task.priority]
-                          }`}
-                        >
+                        <span className={priorityColors[task.priority]}>
                           {task.priority}
                         </span>
                       </div>
 
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex gap-2">
                         {col.id !== "done" && (
                           <button
                             onClick={() => moveTask(task._id, "done")}
-                            className="p-1 text-green-600 hover:text-green-500"
                           >
                             <Check size={14} />
                           </button>
@@ -222,7 +175,6 @@ async function deleteTask(id: string) {
 
                         <button
                           onClick={() => deleteTask(task._id)}
-                          className="p-1 text-destructive hover:text-destructive/80"
                         >
                           <Trash2 size={14} />
                         </button>
