@@ -1,17 +1,21 @@
 import { CheckCircle2, Clock, Target, Flame } from "lucide-react";
 import { Task } from "@/types/dashboard";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { mockTasks } from "@/data/mockData";
 
-function StatsBar() {
-  const [tasks] = useLocalStorage<Task[]>("kanban-tasks", mockTasks);
-
+function StatsBar({ tasks }: { tasks: Task[] }) {
   const totalTasks = tasks.length;
-  const completedTasks = tasks.filter((t) => t.column === "done").length;
-  const inProgressTasks = tasks.filter((t) => t.column === "inprogress").length;
+
+  const completedTasks = tasks.filter(
+    (t) => t.column === "done"
+  ).length;
+
+  const inProgressTasks = tasks.filter(
+    (t) => t.column === "inprogress"
+  ).length;
 
   const completionRate =
-    totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    totalTasks > 0
+      ? Math.round((completedTasks / totalTasks) * 100)
+      : 0;
 
   const stats = [
     {
@@ -50,7 +54,9 @@ function StatsBar() {
           <stat.icon size={20} className={stat.color} />
 
           <div>
-            <p className="text-xl font-bold text-foreground">{stat.value}</p>
+            <p className="text-xl font-bold text-foreground">
+              {stat.value}
+            </p>
             <p className="text-xs text-muted-foreground uppercase tracking-wide">
               {stat.label}
             </p>
