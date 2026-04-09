@@ -18,7 +18,8 @@ interface SessionLog {
 
 function PomodoroTimer() {
   const [mode, setMode] = useState<Mode>("work");
-  const [timeLeft, setTimeLeft] = useState(MODES.work.duration);
+  // const [timeLeft, setTimeLeft] = useState(MODES.work.duration);
+  const [timeLeft, setTimeLeft] = useState(3);
   const [isRunning, setIsRunning] = useState(false);
 
   const [sessions, setSessions] = useLocalStorage<number>(
@@ -42,9 +43,20 @@ function PomodoroTimer() {
   // create audio safely
   useEffect(() => {
     audioRef.current = new Audio("/notification.mp3");
+
+    const unlockAudio = () => {
+      audioRef.current?.play().then(() => {
+        audioRef.current?.pause();
+        audioRef.current!.currentTime = 0;
+      }).catch(() => { });
+
+      document.removeEventListener("click", unlockAudio);
+    };
+
+    document.addEventListener("click", unlockAudio);
   }, []);
 
-  // ⏱️ TIMER LOGIC
+  // TIMER LOGIC
   useEffect(() => {
     if (!isRunning) return;
 
@@ -70,7 +82,10 @@ function PomodoroTimer() {
     setIsRunning(false);
 
     // play sound
-    audioRef.current?.play();
+
+    audioRef.current?.play().catch(() => {
+      console.log("Audio blocked");
+    });
 
     if (mode === "work") {
       setSessions((s) => s + 1);
@@ -85,10 +100,10 @@ function PomodoroTimer() {
           return logs.map((l) =>
             l.date === today
               ? {
-                  ...l,
-                  sessions: l.sessions + 1,
-                  totalMinutes: l.totalMinutes + 25,
-                }
+                ...l,
+                sessions: l.sessions + 1,
+                totalMinutes: l.totalMinutes + 25,
+              }
               : l
           );
         }
@@ -140,11 +155,10 @@ function PomodoroTimer() {
           <button
             key={m}
             onClick={() => switchMode(m)}
-            className={`px-3 py-1.5 rounded-md text-xs transition ${
-              mode === m
-                ? "bg-primary/10 text-primary font-medium"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted"
-            }`}
+            className={`px-3 py-1.5 rounded-md text-xs transition ${mode === m
+              ? "bg-primary/10 text-primary font-medium"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
           >
             {MODES[m].label}
           </button>
