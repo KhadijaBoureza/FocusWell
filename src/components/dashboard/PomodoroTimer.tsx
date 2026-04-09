@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Play, Pause, RotateCcw, Coffee, SkipForward } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 
@@ -37,47 +37,73 @@ function PomodoroTimer() {
   );
 
   const intervalRef = useRef<number | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // create audio safely
   useEffect(() => {
-    if (isRunning && timeLeft > 0) {
-      intervalRef.current = window.setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
-    }
+    audioRef.current = new Audio("/notification.mp3");
+  }, []);
 
-    if (timeLeft === 0) {
-      setIsRunning(false);
+  // ⏱️ TIMER LOGIC
+  useEffect(() => {
+    if (!isRunning) return;
 
-      if (mode === "work") {
-        setSessions((s) => s + 1);
-        setTodayMinutes((m) => m + 25);
-
-        const today = new Date().toISOString().split("T")[0];
-
-        setSessionLog((logs) => {
-          const existing = logs.find((l) => l.date === today);
-
-          if (existing) {
-            return logs.map((l) =>
-              l.date === today
-                ? {
-                    ...l,
-                    sessions: l.sessions + 1,
-                    totalMinutes: l.totalMinutes + 25,
-                  }
-                : l
-            );
-          }
-
-          return [...logs, { date: today, sessions: 1, totalMinutes: 25 }];
-        });
-      }
-    }
+    intervalRef.current = window.setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(intervalRef.current!);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [isRunning, timeLeft, mode]);
+  }, [isRunning]);
+
+  // WHEN TIMER ENDS
+  useEffect(() => {
+    if (timeLeft !== 0) return;
+
+    setIsRunning(false);
+
+    // play sound
+    audioRef.current?.play();
+
+    if (mode === "work") {
+      setSessions((s) => s + 1);
+      setTodayMinutes((m) => m + 25);
+
+      const today = new Date().toISOString().split("T")[0];
+
+      setSessionLog((logs) => {
+        const existing = logs.find((l) => l.date === today);
+
+        if (existing) {
+          return logs.map((l) =>
+            l.date === today
+              ? {
+                  ...l,
+                  sessions: l.sessions + 1,
+                  totalMinutes: l.totalMinutes + 25,
+                }
+              : l
+          );
+        }
+
+        return [...logs, { date: today, sessions: 1, totalMinutes: 25 }];
+      });
+    }
+
+    // auto switch mode
+    if (mode === "work") {
+      switchMode(sessions % 4 === 3 ? "longBreak" : "shortBreak");
+    } else {
+      switchMode("work");
+    }
+  }, [timeLeft]);
 
   function switchMode(newMode: Mode) {
     setMode(newMode);
@@ -136,7 +162,6 @@ function PomodoroTimer() {
             strokeWidth="6"
             fill="none"
           />
-
           <circle
             cx="100"
             cy="100"
@@ -167,22 +192,16 @@ function PomodoroTimer() {
       <div className="flex gap-3">
         <button
           onClick={() => setIsRunning(!isRunning)}
-          className="p-3.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition"
+          className="p-3.5 rounded-full bg-primary/10 text-primary"
         >
           {isRunning ? <Pause size={22} /> : <Play size={22} />}
         </button>
 
-        <button
-          onClick={resetTimer}
-          className="p-3.5 rounded-full bg-muted text-muted-foreground hover:text-foreground transition"
-        >
+        <button onClick={resetTimer} className="p-3.5 rounded-full bg-muted">
           <RotateCcw size={22} />
         </button>
 
-        <button
-          onClick={skipToNext}
-          className="p-3.5 rounded-full bg-muted text-muted-foreground hover:text-foreground transition"
-        >
+        <button onClick={skipToNext} className="p-3.5 rounded-full bg-muted">
           <SkipForward size={22} />
         </button>
       </div>
@@ -194,7 +213,7 @@ function PomodoroTimer() {
           <span>{sessions} sessions</span>
         </div>
 
-        <span className="text-border">|</span>
+        <span>|</span>
 
         <span>{todayMinutes} min today</span>
       </div>
