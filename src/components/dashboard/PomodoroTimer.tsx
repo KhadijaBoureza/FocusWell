@@ -91,10 +91,16 @@ const PomodoroTimer = () => {
         <div className="w-8" />
         <h2 className="font-mono text-lg font-semibold text-foreground">Focus Timer</h2>
         <button
-          onClick={() => setSoundEnabled(!soundEnabled)}
-          className={`p-1.5 rounded-lg transition-all ${
-            soundEnabled ? "text-primary hover:bg-primary/15" : "text-muted-foreground hover:bg-muted/50"
-          }`}
+          onClick={() => {
+            setSoundEnabled(!soundEnabled);
+            // stop sound immediately
+            if (audioRef.current) {
+              audioRef.current.pause();
+              audioRef.current.currentTime = 0;
+            }
+          }}
+          className={`p-1.5 rounded-lg transition-all ${soundEnabled ? "text-primary hover:bg-primary/15" : "text-muted-foreground hover:bg-muted/50"
+            }`}
           title={soundEnabled ? "Sound on" : "Sound off"}
         >
           {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
@@ -106,9 +112,8 @@ const PomodoroTimer = () => {
           <button
             key={m}
             onClick={() => switchMode(m)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all ${
-              mode === m ? "bg-primary/15 text-primary font-medium" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-            }`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all ${mode === m ? "bg-primary/15 text-primary font-medium" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              }`}
           >
             {MODES[m].label}
           </button>
