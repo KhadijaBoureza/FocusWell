@@ -16,6 +16,7 @@ const modeColors: Record<Mode, { stroke: string; text: string; filter: string }>
   longBreak: { stroke: "hsl(var(--secondary))", text: "text-secondary", filter: "hsl(var(--secondary) / 0.5)" },
 };
 
+
 interface SessionLog {
   date: string;
   sessions: number;
@@ -70,11 +71,18 @@ const PomodoroTimer = () => {
     if (timeLeft !== 0) return;
 
     setIsRunning(false);
-    setIsFinished(true);
 
-    // play sound
+    //  play sound FIRST
     if (soundEnabled) {
-      audioRef.current?.play().catch(() => { });
+      audioRef.current?.play()
+        .then(() => {
+          setIsFinished(true); // start blink AFTER sound starts
+        })
+        .catch(() => {
+          setIsFinished(true); // fallback (no delay)
+        });
+    } else {
+      setIsFinished(true);
     }
 
     //  ONLY update stats (NO mode switching)
@@ -187,13 +195,13 @@ const PomodoroTimer = () => {
             cx="100"
             cy="100"
             r="90"
-            stroke={colors.stroke}
+            stroke={isFinished ? "rgb(239 68 68)" : colors.stroke}
             strokeWidth="6"
             fill="none"
             strokeLinecap="round"
             strokeDasharray={circumference}
             strokeDashoffset={circumference * (1 - progress)}
-            style={{ filter: `drop-shadow(0 0 8px ${colors.filter})` }}
+            
           />
         </svg>
 
