@@ -138,10 +138,20 @@ const PomodoroTimer = () => {
 
         <button
           onClick={() => {
-            setSoundEnabled(!soundEnabled);
+            const newState = !soundEnabled;
+            setSoundEnabled(newState);
+
+            // stop sound
             if (audioRef.current) {
               audioRef.current.pause();
               audioRef.current.currentTime = 0;
+            }
+
+            //stop blinking + reset timer ONLY when turning OFF sound
+            if (!newState) {
+              setTimeLeft(MODES[mode].duration);
+              setIsRunning(false);
+              setIsFinished(false);
             }
           }}
           className={`p-1.5 rounded-lg transition-all ${soundEnabled
@@ -190,8 +200,8 @@ const PomodoroTimer = () => {
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span
             className={`font-mono text-5xl font-bold transition-all duration-300 ${isFinished
-                ? "text-red-500 animate-pulse"
-                : colors.text
+              ? "text-red-500 animate-pulse"
+              : colors.text
               }`}
           >
             {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
