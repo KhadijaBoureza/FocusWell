@@ -3,9 +3,9 @@ import { Play, Pause, RotateCcw, Coffee, SkipForward, Volume2, VolumeX } from "l
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 const MODES = {
-  work: { label: "Focus", duration: 25 * 60 },
+  work: { label: "Focus", duration: 1 * 60 },
   shortBreak: { label: "Short Break", duration: 60 }, // 1 min for testing
-  longBreak: { label: "Long Break", duration: 15 * 60 },
+  longBreak: { label: "Long Break", duration: 1 * 60 },
 };
 
 type Mode = keyof typeof MODES;
@@ -23,7 +23,7 @@ interface SessionLog {
 }
 
 const PomodoroTimer = () => {
-
+  const [isFinished, setIsFinished] = useState(false);
   const [mode, setMode] = useState<Mode>("work");
   const [timeLeft, setTimeLeft] = useState(MODES.work.duration);
   const [isRunning, setIsRunning] = useState(false);
@@ -70,6 +70,7 @@ const PomodoroTimer = () => {
     if (timeLeft !== 0) return;
 
     setIsRunning(false);
+    setIsFinished(true);
 
     // play sound
     if (soundEnabled) {
@@ -104,11 +105,13 @@ const PomodoroTimer = () => {
     setMode(newMode);
     setTimeLeft(MODES[newMode].duration);
     setIsRunning(false);
+    setIsFinished(false);
   };
 
   const reset = () => {
     setTimeLeft(MODES[mode].duration);
     setIsRunning(false);
+    setIsFinished(false);
   };
 
   const skipToNext = () => {
@@ -185,7 +188,12 @@ const PomodoroTimer = () => {
         </svg>
 
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className={`font-mono text-5xl font-bold ${colors.text}`}>
+          <span
+            className={`font-mono text-5xl font-bold transition-all duration-300 ${isFinished
+                ? "text-red-500 animate-pulse"
+                : colors.text
+              }`}
+          >
             {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
           </span>
           <span className="text-xs text-muted-foreground mt-2">{MODES[mode].label}</span>
