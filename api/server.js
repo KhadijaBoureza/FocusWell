@@ -7,6 +7,7 @@ const Note = require("./models/Note");
 const Task = require("./models/Task");
 const Thought = require("./models/Thought");
 const Reminder = require("./models/Reminder");
+const PomodoroSession = require("./models/PomodoroSession");
 
 const app = express();
 
@@ -113,9 +114,7 @@ app.put("/notes/:id", async (req, res) => {
 });
 
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+
 
 //Thoughts
 
@@ -209,4 +208,52 @@ app.delete("/reminders/:id", async (req, res) => {
   }
 });
 
+// Save session
+app.post("/pomodoro/session", async (req, res) => {
+  try {
+    console.log("🔥 HIT /pomodoro/session");
+    console.log("BODY:", req.body);
 
+    const newSession = new PomodoroSession({
+      mode: req.body.mode,
+      duration: req.body.duration,
+      completedAt: req.body.completedAt,
+    });
+
+    await newSession.save();
+
+    res.json(newSession);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get sessions
+app.get("/pomodoro", async (req, res) => {
+  try {
+    const sessions = await PomodoroSession.find().sort({ completedAt: -1 });
+
+    const today = new Date().toISOString().split("T")[0];
+
+    const todaySessions = sessions.filter((s) => {
+      const date = new Date(s.completedAt);
+      return date.toISOString().startsWith(today);
+    });
+
+    const todayMinutes = todaySessions.reduce(
+      (acc, s) => acc + s.duration,
+      0
+    );
+    res.json({
+  sessions, 
+  durations: { work: 25, shortBreak: 5, longBreak: 15 },
+});
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// server runner
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
