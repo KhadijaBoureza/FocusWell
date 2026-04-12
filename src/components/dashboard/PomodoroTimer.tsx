@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Play, Pause, RotateCcw, Coffee, SkipForward, BellOff, Settings, Plus, Minus } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { api } from "@/lib/api";
 
 const DEFAULT_DURATIONS = { work: 25, shortBreak: 5, longBreak: 15 };
 
@@ -41,6 +42,32 @@ const PomodoroTimer = () => {
   const intervalRef = useRef<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  useEffect(() => {
+  const loadFromBackend = async () => {
+    try {
+      const data = await api.getTimer();
+
+      if (!data) return;
+
+      // safely update state
+      if (data.durations) setDurations(data.durations);
+      if (data.sessions) setSessions(data.sessions);
+      if (data.todayMinutes) setTodayMinutes(data.todayMinutes);
+      if (data.sessionLog) setSessionLog(data.sessionLog);
+
+      // sync timer with backend durations
+      if (data.durations?.[mode]) {
+        setTimeLeft(data.durations[mode] * 60);
+      }
+
+      console.log("Loaded from backend ✅");
+    } catch {
+      console.log("Using localStorage fallback ⚡");
+    }
+  };
+
+  loadFromBackend();
+}, []);
 
   // INIT AUDIO
   useEffect(() => {
@@ -61,10 +88,10 @@ const PomodoroTimer = () => {
     document.addEventListener("click", unlockAudio);
   }, []);
 
-  // Play sound immediately via callback (no useEffect delay)
+  // Play sound immediately via callback
   const playSound = useCallback(() => {
     if (audioRef.current) {
-      audioRef.current.currentTime = 0;
+      audioRef.current.currentTime = -1;
       audioRef.current.play().catch(() => {});
     }
   }, []);
