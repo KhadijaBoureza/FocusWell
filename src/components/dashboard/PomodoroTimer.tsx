@@ -91,7 +91,7 @@ const PomodoroTimer = () => {
   // Play sound immediately via callback
   const playSound = useCallback(() => {
     if (audioRef.current) {
-      audioRef.current.currentTime = -1;
+      audioRef.current.currentTime = 0;
       audioRef.current.play().catch(() => { });
     }
   }, []);
