@@ -43,31 +43,31 @@ const PomodoroTimer = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-  const loadFromBackend = async () => {
-    try {
-      const data = await api.getTimer();
+    const loadFromBackend = async () => {
+      try {
+        const data = await api.getTimer();
 
-      if (!data) return;
+        if (!data) return;
 
-      // safely update state
-      if (data.durations) setDurations(data.durations);
-      if (data.sessions) setSessions(data.sessions);
-      if (data.todayMinutes) setTodayMinutes(data.todayMinutes);
-      if (data.sessionLog) setSessionLog(data.sessionLog);
+        // safely update state
+        if (data.durations) setDurations(data.durations);
+        if (data.sessions) setSessions(data.sessions);
+        if (data.todayMinutes) setTodayMinutes(data.todayMinutes);
+        if (data.sessionLog) setSessionLog(data.sessionLog);
 
-      // sync timer with backend durations
-      if (data.durations?.[mode]) {
-        setTimeLeft(data.durations[mode] * 60);
+        // sync timer with backend durations
+        if (data.durations?.[mode]) {
+          setTimeLeft(data.durations[mode] * 60);
+        }
+
+        console.log("Loaded from backend ✅");
+      } catch {
+        console.log("Using localStorage fallback ⚡");
       }
+    };
 
-      console.log("Loaded from backend ✅");
-    } catch {
-      console.log("Using localStorage fallback ⚡");
-    }
-  };
-
-  loadFromBackend();
-}, []);
+    loadFromBackend();
+  }, []);
 
   // INIT AUDIO
   useEffect(() => {
@@ -82,7 +82,7 @@ const PomodoroTimer = () => {
         audio.pause();
         audio.currentTime = 0;
         audio.muted = false;
-      }).catch(() => {});
+      }).catch(() => { });
       document.removeEventListener("click", unlockAudio);
     };
     document.addEventListener("click", unlockAudio);
@@ -92,7 +92,7 @@ const PomodoroTimer = () => {
   const playSound = useCallback(() => {
     if (audioRef.current) {
       audioRef.current.currentTime = -1;
-      audioRef.current.play().catch(() => {});
+      audioRef.current.play().catch(() => { });
     }
   }, []);
 
@@ -146,6 +146,11 @@ const PomodoroTimer = () => {
         }
         return [...logs, { date: today, sessions: 1, totalMinutes: focusMinutes }];
       });
+      api.saveSession({
+        mode: "work",
+        duration: durations.work,
+        completedAt: new Date().toISOString(),
+      });
     }
   }, [timeLeft, isRunning]);
 
@@ -161,7 +166,7 @@ const PomodoroTimer = () => {
     setTimeLeft(durations[mode] * 60);
     setIsRunning(false);
     setIsFinished(false);
-    
+
     if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
   };
 
@@ -263,9 +268,8 @@ const PomodoroTimer = () => {
           <button
             key={m}
             onClick={() => switchMode(m)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all ${
-              mode === m ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-            }`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all ${mode === m ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              }`}
           >
             {MODE_LABELS[m]}
           </button>
