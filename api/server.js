@@ -14,147 +14,193 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Temporary in-memory storage
-let tasks = [
-  { id: 1, title: "Finish FocusHub UI", column: "todo" },
-  { id: 2, title: "Connect backend API", column: "inprogress" },
-  { id: 3, title: "Deploy app", column: "done" }
-];
-
-//Tasks
+// Tasks
 
 // GET all tasks
 app.get("/tasks", async (req, res) => {
-  const tasks = await Task.find().sort({ _id: -1 });
-  res.json(tasks);
+  try {
+    const tasks = await Task.find().sort({ _id: -1 });
+    res.json(tasks);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ADD a task
 app.post("/tasks", async (req, res) => {
-  const newTask = new Task({
-    ...req.body,
-    completed: req.body.column === "done",
-    createdAt: new Date().toISOString().split("T")[0],
-  });
+  try {
+    const isDone = req.body.column === "done";
 
-  await newTask.save();
+    const newTask = new Task({
+      title: req.body.title,
+      column: req.body.column || "todo",
+      priority: req.body.priority || "medium",
+      completed: isDone,
+      createdAt: new Date().toISOString(),
+      completedAt: isDone ? new Date().toISOString() : null,
+    });
 
-  res.json(newTask);
+    await newTask.save();
+
+    res.json(newTask);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// UPDATE a task 
+// UPDATE a task
 app.put("/tasks/:id", async (req, res) => {
-  const updates = {
-    ...req.body,
-  };
+  try {
+    const existingTask = await Task.findById(req.params.id);
 
-  // Auto-handle completed if column is updated
-  if (req.body.column) {
-    updates.completed = req.body.column === "done";
+    if (!existingTask) {
+      return res.status(404).json({ error: "Task not found" });
+    }
+
+    const updates = {
+      ...req.body,
+    };
+
+    if (req.body.column) {
+      const movingToDone = req.body.column === "done";
+      const wasAlreadyDone = existingTask.column === "done";
+
+      updates.completed = movingToDone;
+
+      if (movingToDone && !wasAlreadyDone) {
+        updates.completedAt = new Date().toISOString();
+      }
+
+      if (!movingToDone) {
+        updates.completedAt = null;
+      }
+    }
+
+    const updatedTask = await Task.findByIdAndUpdate(req.params.id, updates, {
+      new: true,
+    });
+
+    res.json(updatedTask);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-
-  const updatedTask = await Task.findByIdAndUpdate(
-    req.params.id,
-    updates,
-    { new: true } // returns updated document
-  );
-
-  res.json(updatedTask);
 });
 
 // DELETE a task
 app.delete("/tasks/:id", async (req, res) => {
-  await Task.findByIdAndDelete(req.params.id);
-  res.json({ success: true });
+  try {
+    await Task.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 const PORT = 5000;
 
-
 // Notes
-
-let notes = [
-  {
-    id: "1",
-    title: "First note",
-    content: "This is your first note",
-    color: "violet",
-    createdAt: new Date().toISOString().split("T")[0],
-  }
-];
 
 // GET all notes
 app.get("/notes", async (req, res) => {
-  const notes = await Note.find().sort({ _id: -1 });
-  res.json(notes);
+  try {
+    const notes = await Note.find().sort({ _id: -1 });
+    res.json(notes);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ADD note
 app.post("/notes", async (req, res) => {
-  const newNote = new Note({
-    ...req.body,
-    createdAt: new Date().toISOString().split("T")[0],
-  });
+  try {
+    const newNote = new Note({
+      ...req.body,
+      createdAt: new Date().toISOString().split("T")[0],
+    });
 
-  await newNote.save();
+    await newNote.save();
 
-  res.json(newNote);
+    res.json(newNote);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // DELETE note
 app.delete("/notes/:id", async (req, res) => {
-  await Note.findByIdAndDelete(req.params.id);
-  res.json({ success: true });
+  try {
+    await Note.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// UPDATE not
+// UPDATE note
 app.put("/notes/:id", async (req, res) => {
-  await Note.findByIdAndUpdate(req.params.id, req.body);
-  res.json({ success: true });
+  try {
+    const updated = await Note.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-
-
-
-//Thoughts
+// Thoughts
 
 // Get all thoughts
 app.get("/thoughts", async (req, res) => {
-  const thoughts = await Thought.find().sort({ _id: -1 });
-  res.json(thoughts);
+  try {
+    const thoughts = await Thought.find().sort({ _id: -1 });
+    res.json(thoughts);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Post Thought
 app.post("/thoughts", async (req, res) => {
-  const newThought = new Thought({
-    ...req.body,
-    createdAt: new Date().toISOString(),
-  });
+  try {
+    const newThought = new Thought({
+      ...req.body,
+      createdAt: new Date().toISOString(),
+    });
 
-  await newThought.save();
-  res.json(newThought);
+    await newThought.save();
+    res.json(newThought);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Delete Thought
 app.delete("/thoughts/:id", async (req, res) => {
-  await Thought.findByIdAndDelete(req.params.id);
-  res.json({ success: true });
+  try {
+    await Thought.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Update Thought
 app.put("/thoughts/:id", async (req, res) => {
-  const updated = await Thought.findByIdAndUpdate(
-    req.params.id,
-    req.body,
-    { new: true }
-  );
+  try {
+    const updated = await Thought.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
 
-  res.json(updated);
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// Reminders 
+// Reminders
 
-//get reminders
+// Get reminders
 app.get("/reminders", async (req, res) => {
   try {
     const reminders = await Reminder.find().sort({ _id: -1 });
@@ -164,8 +210,7 @@ app.get("/reminders", async (req, res) => {
   }
 });
 
-// create reminders 
-
+// Create reminders
 app.post("/reminders", async (req, res) => {
   try {
     const newReminder = new Reminder({
@@ -182,15 +227,13 @@ app.post("/reminders", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-// update reminders 
 
+// Update reminders
 app.put("/reminders/:id", async (req, res) => {
   try {
-    const updated = await Reminder.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
+    const updated = await Reminder.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
 
     res.json(updated);
   } catch (err) {
@@ -198,7 +241,7 @@ app.put("/reminders/:id", async (req, res) => {
   }
 });
 
-// delete remeinders 
+// Delete reminders
 app.delete("/reminders/:id", async (req, res) => {
   try {
     await Reminder.findByIdAndDelete(req.params.id);
@@ -211,9 +254,6 @@ app.delete("/reminders/:id", async (req, res) => {
 // Save session
 app.post("/pomodoro/session", async (req, res) => {
   try {
-    console.log("🔥 HIT /pomodoro/session");
-    console.log("BODY:", req.body);
-
     const newSession = new PomodoroSession({
       mode: req.body.mode,
       duration: req.body.duration,
@@ -233,27 +273,16 @@ app.get("/pomodoro", async (req, res) => {
   try {
     const sessions = await PomodoroSession.find().sort({ completedAt: -1 });
 
-    const today = new Date().toISOString().split("T")[0];
-
-    const todaySessions = sessions.filter((s) => {
-      const date = new Date(s.completedAt);
-      return date.toISOString().startsWith(today);
-    });
-
-    const todayMinutes = todaySessions.reduce(
-      (acc, s) => acc + s.duration,
-      0
-    );
     res.json({
-  sessions, 
-  durations: { work: 25, shortBreak: 5, longBreak: 15 },
-});
+      sessions,
+      durations: { work: 25, shortBreak: 5, longBreak: 15 },
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// server runner
+// Server runner
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
