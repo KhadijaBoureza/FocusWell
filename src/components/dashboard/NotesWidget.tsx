@@ -33,7 +33,7 @@ function NotesWidget() {
       .catch((err) => console.error(err));
   }, []);
 
-  // ❌ OLD addNote (local version) 
+  // ❌ OLD addNote (local version)
   // function addNote() {
   //   if (!title.trim()) return;
 
@@ -78,8 +78,7 @@ function NotesWidget() {
   //   setNotes(notes.filter((n) => n.id !== id));
   // }
 
-
-  // ✅ NEW addNote → sends to backend
+  // NEW addNote → sends to backend
 
   async function addNote() {
     if (!title.trim()) return;
@@ -111,47 +110,51 @@ function NotesWidget() {
     });
 
     if (res.ok) {
-      setNotes((prev) => prev.filter((n) => n.id !== id));
+      setNotes((prev) => prev.filter((n) => n._id !== id));
     }
   }
 
   async function saveEdit(id: string) {
-  const res = await fetch(`http://localhost:5000/notes/${id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ title, content }),
-  });
+    const res = await fetch(`http://localhost:5000/notes/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ title, content }),
+    });
 
-  if (res.ok) {
-    setNotes((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, title, content } : n))
-    );
+    if (res.ok) {
+      setNotes((prev) =>
+        prev.map((n) => (n._id === id ? { ...n, title, content } : n))
+      );
 
-    setEditingId(null);
+      setEditingId(null);
+      setTitle("");
+      setContent("");
+    }
   }
-}
 
   function startEdit(note: Note) {
-    setEditingId(note.id);
+    setEditingId(note._id);
     setTitle(note.title);
     setContent(note.content);
+    setIsAdding(false);
   }
 
   return (
     <div className="rounded-xl border border-border bg-card p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">Notes</h2>
 
         <button
           onClick={() => {
             setIsAdding(!isAdding);
+            setEditingId(null);
             setTitle("");
             setContent("");
           }}
-          className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition"
+          className="rounded-md p-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground"
         >
           {isAdding ? <X size={16} /> : <Plus size={16} />}
         </button>
@@ -159,12 +162,12 @@ function NotesWidget() {
 
       {/* Add note */}
       {isAdding && (
-        <div className="mb-4 space-y-2 p-3 bg-muted/40 rounded-lg">
+        <div className="mb-4 space-y-2 rounded-lg bg-muted/40 p-3">
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Note title..."
-            className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
           />
 
           <textarea
@@ -172,7 +175,7 @@ function NotesWidget() {
             onChange={(e) => setContent(e.target.value)}
             placeholder="Write something..."
             rows={3}
-            className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary resize-none"
+            className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
           />
 
           <div className="flex items-center justify-between">
@@ -181,22 +184,24 @@ function NotesWidget() {
                 <button
                   key={c}
                   onClick={() => setSelectedColor(c)}
-                  className={`w-5 h-5 rounded-full border-2 transition ${c === "violet"
+                  className={`h-5 w-5 rounded-full border-2 transition ${
+                    c === "violet"
                       ? "bg-purple-500"
                       : c === "blue"
-                        ? "bg-blue-500"
-                        : "bg-cyan-500"
-                    } ${selectedColor === c
-                      ? "border-foreground scale-110"
+                      ? "bg-blue-500"
+                      : "bg-cyan-500"
+                  } ${
+                    selectedColor === c
+                      ? "scale-110 border-foreground"
                       : "border-transparent"
-                    }`}
+                  }`}
                 />
               ))}
             </div>
 
             <button
               onClick={addNote}
-              className="px-3 py-1 rounded-md bg-primary text-primary-foreground text-xs hover:opacity-90 transition"
+              className="rounded-md bg-primary px-3 py-1 text-xs text-primary-foreground transition hover:opacity-90"
             >
               Save
             </button>
@@ -205,30 +210,31 @@ function NotesWidget() {
       )}
 
       {/* Notes list */}
-      <div className="space-y-3 max-h-[300px] overflow-y-auto">
+      <div className="max-h-[300px] space-y-3 overflow-y-auto">
         {notes.map((note) => (
           <div
-            key={note.id}
-            className={`border-l-2 ${colorMap[note.color] || "border-l-purple-500"
-              } bg-muted/20 rounded-r-md p-3 group`}
+            key={note._id}
+            className={`group rounded-r-md border-l-2 ${
+              colorMap[note.color] || "border-l-purple-500"
+            } bg-muted/20 p-3`}
           >
-            {editingId === note.id ? (
+            {editingId === note._id ? (
               <div className="space-y-2">
                 <input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full border border-border rounded px-2 py-1 text-sm bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full rounded border border-border bg-background px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                 />
 
                 <textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   rows={2}
-                  className="w-full border border-border rounded px-2 py-1 text-sm bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary resize-none"
+                  className="w-full resize-none rounded border border-border bg-background px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                 />
 
                 <button
-                  onClick={() => saveEdit(note.id)}
+                  onClick={() => saveEdit(note._id)}
                   className="p-1 text-green-600 hover:text-green-500"
                 >
                   <Save size={14} />
@@ -239,7 +245,7 @@ function NotesWidget() {
                 <div className="flex items-start justify-between">
                   <h4 className="text-sm font-semibold">{note.title}</h4>
 
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition">
+                  <div className="flex gap-1 opacity-0 transition group-hover:opacity-100">
                     <button
                       onClick={() => startEdit(note)}
                       className="p-1 text-muted-foreground hover:text-foreground"
@@ -248,7 +254,7 @@ function NotesWidget() {
                     </button>
 
                     <button
-                      onClick={() => deleteNote(note.id)}
+                      onClick={() => deleteNote(note._id)}
                       className="p-1 text-destructive hover:text-destructive/80"
                     >
                       <Trash2 size={12} />
@@ -256,11 +262,11 @@ function NotesWidget() {
                   </div>
                 </div>
 
-                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
                   {note.content}
                 </p>
 
-                <span className="text-[10px] text-muted-foreground/60 mt-1 block">
+                <span className="mt-1 block text-[10px] text-muted-foreground/60">
                   {note.createdAt}
                 </span>
               </>
