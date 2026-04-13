@@ -142,17 +142,19 @@ const CalendarWidget = () => {
                 {day && (
                   <button
                     onClick={() => handleDayClick(day)}
-                    className={`w-8 h-8 rounded-full text-sm font-mono transition-all relative ${
-                      isToday(day)
+                    className={`w-7 h-7 rounded-full text-xs font-mono transition-all relative ${isToday(day)
                         ? "bg-primary text-primary-foreground neon-glow-violet"
                         : "text-foreground hover:bg-muted"
-                    }`}
+                      }`}
                   >
                     {day}
                     {dayEvents.length > 0 && (
-                      <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 flex gap-0.5">
+                      <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 flex gap-0.5">
                         {dayEvents.slice(0, 3).map((e, idx) => (
-                          <span key={idx} className={`w-1 h-1 rounded-full ${EVENT_COLORS[e.type]}`} />
+                          <span
+                            key={idx}
+                            className={`w-1 h-1 rounded-full ${EVENT_COLORS[e.type]}`}
+                          />
                         ))}
                       </span>
                     )}
