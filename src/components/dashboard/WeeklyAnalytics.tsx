@@ -37,7 +37,7 @@ function calculateDailyTrend(data: WeeklyDataItem[]) {
     return todayTasks > 0 ? 100 : 0;
   }
 
-  return Math.round(((todayTasks - todayTasks) / yesterdayTasks) * 100);
+  return Math.round(((todayTasks - yesterdayTasks) / yesterdayTasks) * 100);
 }
 
 function WeeklyAnalytics({ tasks, refreshKey }: WeeklyAnalyticsProps) {
@@ -96,7 +96,7 @@ function WeeklyAnalytics({ tasks, refreshKey }: WeeklyAnalyticsProps) {
 
   const totalFocus = weeklyData.reduce((sum, day) => sum + day.focus, 0);
   const totalTasks = weeklyData.reduce((sum, day) => sum + day.tasks, 0);
-  const avgFocus = (totalFocus / 7 || 0).toFixed(1);
+  const avgFocus = (totalFocus / 7 || 0).toFixed(2);
   const taskTrend = calculateDailyTrend(weeklyData);
 
   return (
@@ -120,7 +120,7 @@ function WeeklyAnalytics({ tasks, refreshKey }: WeeklyAnalyticsProps) {
 
       <div className="mb-5 grid grid-cols-3 gap-3">
         <div className="rounded-lg bg-muted/40 p-3 text-center">
-          <p className="text-xl font-bold">{totalFocus.toFixed(1)}h</p>
+          <p className="text-xl font-bold">{totalFocus.toFixed(2)}h</p>
           <p className="text-xs uppercase text-muted-foreground">Focus Time</p>
         </div>
 
@@ -158,7 +158,14 @@ function WeeklyAnalytics({ tasks, refreshKey }: WeeklyAnalyticsProps) {
               width={25}
             />
 
-            <Tooltip />
+            <Tooltip
+              formatter={(value: number, name: string) => {
+                if (name === "Focus (hrs)") {
+                  return [`${Number(value).toFixed(2)}h`, name];
+                }
+                return [value, name];
+              }}
+            />
 
             <Bar
               dataKey="focus"
