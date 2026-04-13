@@ -220,7 +220,7 @@ function NotesWidget() {
       )}
 
       {/* Notes list */}
-      <div className="max-h-[300px] space-y-3 overflow-y-auto">
+      <div  className="space-y-3 max-h-[300px] overflow-y-auto scrollbar-thin">
         {notes.map((note) => (
           <div
             key={note._id}
