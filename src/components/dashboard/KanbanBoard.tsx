@@ -1,17 +1,17 @@
 import { useState } from "react";
-import { Plus, Trash2, Check } from "lucide-react";
-import { Task, KanbanColumn } from "@/types/dashboard";
+import { Plus, GripVertical, Trash2, Check } from "lucide-react";
+import { Task, KanbanColumn, TaskPriority } from "@/types/dashboard";
 
-const COLUMNS: { id: KanbanColumn; title: string }[] = [
-  { id: "todo", title: "To Do" },
-  { id: "inprogress", title: "In Progress" },
-  { id: "done", title: "Done" },
+const COLUMNS: { id: KanbanColumn; title: string; colorClass: string }[] = [
+  { id: "todo", title: "To Do", colorClass: "neon-text-violet" },
+  { id: "inprogress", title: "In Progress", colorClass: "neon-text-blue" },
+  { id: "done", title: "Done", colorClass: "neon-text-cyan" },
 ];
 
 const priorityColors: Record<string, string> = {
-  low: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  medium: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  high: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+  low: "bg-neon-green/20 text-neon-green",
+  medium: "bg-neon-blue/20 text-neon-blue",
+  high: "bg-neon-pink/20 text-neon-pink",
 };
 
 function KanbanBoard({
@@ -24,6 +24,8 @@ function KanbanBoard({
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [addingTo, setAddingTo] = useState<KanbanColumn | null>(null);
   const [draggedTask, setDraggedTask] = useState<string | null>(null);
+  const [selectedPriority, setSelectedPriority] =
+    useState<TaskPriority>("medium");
 
   async function addTask(column: KanbanColumn) {
     if (!newTaskTitle.trim()) return;
@@ -31,6 +33,7 @@ function KanbanBoard({
     const payload = {
       title: newTaskTitle,
       column,
+      priority: selectedPriority,
       completed: column === "done",
       completedAt: column === "done" ? new Date().toISOString() : null,
     };
@@ -52,6 +55,7 @@ function KanbanBoard({
 
     setTasks((prev) => [...prev, newTask]);
     setNewTaskTitle("");
+    setSelectedPriority("medium");
     setAddingTo(null);
   }
 
@@ -122,8 +126,10 @@ function KanbanBoard({
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card p-6">
-      <h2 className="mb-4 text-lg font-semibold">Task Board</h2>
+    <div className="glass-card neon-border-blue p-6">
+      <h2 className="mb-4 font-mono text-lg font-semibold text-foreground">
+        Task Board
+      </h2>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {COLUMNS.map((col) => (
@@ -131,10 +137,10 @@ function KanbanBoard({
             key={col.id}
             onDragOver={handleDragOver}
             onDrop={() => handleDrop(col.id)}
-            className="min-h-[220px] rounded-lg bg-muted/40 p-3"
+            className="min-h-[200px] rounded-lg bg-muted/30 p-3"
           >
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-semibold">
+              <h3 className={`font-mono text-sm font-semibold ${col.colorClass}`}>
                 {col.title}
                 <span className="ml-2 text-muted-foreground">
                   {tasks.filter((t) => t.column === col.id).length}
@@ -142,8 +148,12 @@ function KanbanBoard({
               </h3>
 
               <button
-                onClick={() => setAddingTo(addingTo === col.id ? null : col.id)}
-                className="rounded p-1 text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  setAddingTo(addingTo === col.id ? null : col.id);
+                  setNewTaskTitle("");
+                  setSelectedPriority("medium");
+                }}
+                className="rounded p-1 text-muted-foreground transition-colors hover:text-foreground"
                 type="button"
               >
                 <Plus size={16} />
@@ -151,7 +161,7 @@ function KanbanBoard({
             </div>
 
             {addingTo === col.id && (
-              <div className="mb-3">
+              <div className="mb-3 space-y-2">
                 <input
                   value={newTaskTitle}
                   onChange={(e) => setNewTaskTitle(e.target.value)}
@@ -159,8 +169,30 @@ function KanbanBoard({
                     if (e.key === "Enter") addTask(col.id);
                   }}
                   placeholder="Task title..."
-                  className="w-full rounded border px-2 py-1"
+                  autoFocus
+                  className="w-full rounded-md border border-border bg-background/50 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                 />
+
+                <div className="flex gap-2">
+                  {(["low", "medium", "high"] as TaskPriority[]).map(
+                    (priority) => (
+                      <button
+                        key={priority}
+                        type="button"
+                        onClick={() => setSelectedPriority(priority)}
+                        className={`rounded px-2 py-1 text-[10px] font-mono capitalize transition-all ${
+                          priorityColors[priority]
+                        } ${
+                          selectedPriority === priority
+                            ? "ring-1 ring-foreground scale-105"
+                            : "opacity-80 hover:opacity-100"
+                        }`}
+                      >
+                        {priority}
+                      </button>
+                    )
+                  )}
+                </div>
               </div>
             )}
 
@@ -172,34 +204,42 @@ function KanbanBoard({
                     key={task._id}
                     draggable
                     onDragStart={() => handleDragStart(task._id)}
-                    className={`cursor-grab rounded border p-3 ${
+                    className={`group cursor-grab rounded-md border border-border/50 bg-card p-3 transition-all hover:border-primary/30 active:cursor-grabbing ${
                       draggedTask === task._id ? "opacity-50" : ""
                     }`}
                   >
-                    <div className="flex items-start justify-between">
-                      <div>
+                    <div className="flex items-start gap-2">
+                      <GripVertical
+                        size={14}
+                        className="mt-0.5 shrink-0 text-muted-foreground"
+                      />
+
+                      <div className="min-w-0 flex-1">
                         <p
-                          className={
-                            task.completed ? "line-through text-gray-400" : ""
-                          }
+                          className={`text-sm ${
+                            task.completed
+                              ? "line-through text-muted-foreground"
+                              : "text-foreground"
+                          }`}
                         >
                           {task.title}
                         </p>
 
                         <span
-                          className={`inline-block rounded px-2 py-1 text-xs font-medium capitalize ${
+                          className={`mt-1 inline-block rounded px-2 py-0.5 text-[10px] font-mono capitalize ${
                             priorityColors[task.priority] ||
-                            "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400"
+                            "bg-muted text-muted-foreground"
                           }`}
                         >
                           {task.priority}
                         </span>
                       </div>
 
-                      <div className="flex gap-2">
+                      <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                         {col.id !== "done" && (
                           <button
                             onClick={() => moveTask(task._id, "done")}
+                            className="p-1 text-neon-green hover:text-neon-green/80"
                             type="button"
                           >
                             <Check size={14} />
@@ -208,6 +248,7 @@ function KanbanBoard({
 
                         <button
                           onClick={() => deleteTask(task._id)}
+                          className="p-1 text-destructive hover:text-destructive/80"
                           type="button"
                         >
                           <Trash2 size={14} />
