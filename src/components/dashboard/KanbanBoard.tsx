@@ -249,7 +249,7 @@ function KanbanBoard({
               </div>
             )}
 
-            <div className="space-y-2">
+            <div className="max-h-[320px] space-y-2 overflow-y-auto pr-1 scrollbar-thin">
               {tasks
                 .filter((t) => t.column === col.id)
                 .map((task) => (
