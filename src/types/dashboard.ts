@@ -16,6 +16,7 @@ export interface Task {
   priority: TaskPriority;
   column: KanbanColumn;
   createdAt: string; // ISO date string
+  completedAt?: string | null; // ISO date string when task is marked done
 }
 
 export interface Note {
