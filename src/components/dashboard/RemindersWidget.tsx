@@ -128,7 +128,7 @@ function RemindersWidget() {
       )}
 
       {/* Reminder list */}
-      <div className="space-y-2 max-h-[250px] overflow-y-auto">
+      <div className="space-y-3 max-h-[300px] overflow-y-auto scrollbar-thin">
         {sortedReminders.map((reminder) => (
           <div
             key={reminder._id}
