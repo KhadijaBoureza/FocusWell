@@ -153,7 +153,7 @@ function NotesWidget() {
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card p-6">
+    <div className="glass-card neon-border-blue p-6">
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">Notes</h2>

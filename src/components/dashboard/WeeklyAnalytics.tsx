@@ -100,7 +100,7 @@ function WeeklyAnalytics({ tasks, refreshKey }: WeeklyAnalyticsProps) {
   const taskTrend = calculateDailyTrend(weeklyData);
 
   return (
-    <div className="rounded-xl border border-border bg-card p-6">
+    <div className="glass-card neon-border-blue p-6">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <BarChart3 size={18} className="text-primary" />
