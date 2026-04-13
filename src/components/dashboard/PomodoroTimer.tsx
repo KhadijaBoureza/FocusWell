@@ -39,21 +39,56 @@ const PomodoroTimer = () => {
   const [todayMinutes, setTodayMinutes] = useLocalStorage("focuswell-today-minutes", 0);
   const [sessionLog, setSessionLog] = useLocalStorage<SessionLog[]>("focuswell-session-log", []);
 
-  const intervalRef = useRef<number | null>(null);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const loadFromBackend = async () => {
       try {
-        const data = await api.getTimer();
+        const data = await api.getPomodoro();
 
         if (!data) return;
 
         // safely update state
         if (data.durations) setDurations(data.durations);
-        if (data.sessions) setSessions(data.sessions);
-        if (data.todayMinutes) setTodayMinutes(data.todayMinutes);
-        if (data.sessionLog) setSessionLog(data.sessionLog);
+
+        // backend returns sessions as an array, so convert it
+        if (Array.isArray(data.sessions)) {
+          const today = new Date().toISOString().split("T")[0];
+
+          setSessions(data.sessions.length);
+
+          const todaySessions = data.sessions.filter((s: any) =>
+            String(s.completedAt).startsWith(today)
+          );
+
+          const todayMinutesTotal = todaySessions.reduce(
+            (sum: number, s: any) => sum + (s.duration || 0),
+            0
+          );
+
+          setTodayMinutes(todayMinutesTotal);
+
+          const groupedLog = data.sessions.reduce((acc: SessionLog[], s: any) => {
+            const date = String(s.completedAt).split("T")[0];
+            const existing = acc.find((item) => item.date === date);
+
+            if (existing) {
+              existing.sessions += 1;
+              existing.totalMinutes += s.duration || 0;
+            } else {
+              acc.push({
+                date,
+                sessions: 1,
+                totalMinutes: s.duration || 0,
+              });
+            }
+
+            return acc;
+          }, []);
+
+          setSessionLog(groupedLog);
+        }
 
         // sync timer with backend durations
         if (data.durations?.[mode]) {
