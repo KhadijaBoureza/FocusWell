@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, GripVertical, Trash2, Check } from "lucide-react";
+import { Plus, Trash2, Check } from "lucide-react";
 import { Task, KanbanColumn } from "@/types/dashboard";
 
 const COLUMNS: { id: KanbanColumn; title: string }[] = [
@@ -25,20 +25,28 @@ function KanbanBoard({
   const [addingTo, setAddingTo] = useState<KanbanColumn | null>(null);
   const [draggedTask, setDraggedTask] = useState<string | null>(null);
 
-  // ADD TASK
   async function addTask(column: KanbanColumn) {
     if (!newTaskTitle.trim()) return;
+
+    const payload = {
+      title: newTaskTitle,
+      column,
+      completed: column === "done",
+      completedAt: column === "done" ? new Date().toISOString() : null,
+    };
 
     const res = await fetch("http://localhost:5000/tasks", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        title: newTaskTitle,
-        column,
-      }),
+      body: JSON.stringify(payload),
     });
+
+    if (!res.ok) {
+      console.error("Failed to add task");
+      return;
+    }
 
     const newTask = await res.json();
 
@@ -47,7 +55,6 @@ function KanbanBoard({
     setAddingTo(null);
   }
 
-  // DELETE TASK
   async function deleteTask(id: string) {
     const res = await fetch(`http://localhost:5000/tasks/${id}`, {
       method: "DELETE",
@@ -58,20 +65,42 @@ function KanbanBoard({
     }
   }
 
-  // MOVE TASK
   async function moveTask(taskId: string, newColumn: KanbanColumn) {
-    await fetch(`http://localhost:5000/tasks/${taskId}`, {
+    const now = new Date().toISOString();
+
+    const updatedFields =
+      newColumn === "done"
+        ? {
+            column: newColumn,
+            completed: true,
+            completedAt: now,
+          }
+        : {
+            column: newColumn,
+            completed: false,
+            completedAt: null,
+          };
+
+    const res = await fetch(`http://localhost:5000/tasks/${taskId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ column: newColumn }),
+      body: JSON.stringify(updatedFields),
     });
+
+    if (!res.ok) {
+      console.error("Failed to move task");
+      return;
+    }
 
     setTasks((prev) =>
       prev.map((t) =>
         t._id === taskId
-          ? { ...t, column: newColumn, completed: newColumn === "done" }
+          ? {
+              ...t,
+              ...updatedFields,
+            }
           : t
       )
     );
@@ -81,12 +110,12 @@ function KanbanBoard({
     setDraggedTask(taskId);
   }
 
-  function handleDragOver(e: React.DragEvent) {
+  function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
   }
 
   function handleDrop(column: KanbanColumn) {
-    if (draggedTask !== null) {
+    if (draggedTask) {
       moveTask(draggedTask, column);
       setDraggedTask(null);
     }
@@ -94,18 +123,17 @@ function KanbanBoard({
 
   return (
     <div className="rounded-xl border border-border bg-card p-6">
-      <h2 className="text-lg font-semibold mb-4">Task Board</h2>
+      <h2 className="mb-4 text-lg font-semibold">Task Board</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {COLUMNS.map((col) => (
           <div
             key={col.id}
             onDragOver={handleDragOver}
             onDrop={() => handleDrop(col.id)}
-            className="bg-muted/40 rounded-lg p-3 min-h-[220px]"
+            className="min-h-[220px] rounded-lg bg-muted/40 p-3"
           >
-            {/* HEADER */}
-            <div className="flex items-center justify-between mb-3">
+            <div className="mb-3 flex items-center justify-between">
               <h3 className="text-sm font-semibold">
                 {col.title}
                 <span className="ml-2 text-muted-foreground">
@@ -114,29 +142,28 @@ function KanbanBoard({
               </h3>
 
               <button
-                onClick={() =>
-                  setAddingTo(addingTo === col.id ? null : col.id)
-                }
-                className="p-1 rounded text-muted-foreground hover:text-foreground"
+                onClick={() => setAddingTo(addingTo === col.id ? null : col.id)}
+                className="rounded p-1 text-muted-foreground hover:text-foreground"
+                type="button"
               >
                 <Plus size={16} />
               </button>
             </div>
 
-            {/* ADD INPUT */}
             {addingTo === col.id && (
               <div className="mb-3">
                 <input
                   value={newTaskTitle}
                   onChange={(e) => setNewTaskTitle(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && addTask(col.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") addTask(col.id);
+                  }}
                   placeholder="Task title..."
-                  className="w-full border rounded px-2 py-1"
+                  className="w-full rounded border px-2 py-1"
                 />
               </div>
             )}
 
-            {/* TASKS */}
             <div className="space-y-2">
               {tasks
                 .filter((t) => t.column === col.id)
@@ -145,11 +172,11 @@ function KanbanBoard({
                     key={task._id}
                     draggable
                     onDragStart={() => handleDragStart(task._id)}
-                    className={`p-3 border rounded cursor-grab ${
+                    className={`cursor-grab rounded border p-3 ${
                       draggedTask === task._id ? "opacity-50" : ""
                     }`}
                   >
-                    <div className="flex justify-between items-start">
+                    <div className="flex items-start justify-between">
                       <div>
                         <p
                           className={
@@ -159,7 +186,12 @@ function KanbanBoard({
                           {task.title}
                         </p>
 
-                        <span className={priorityColors[task.priority]}>
+                        <span
+                          className={`inline-block rounded px-2 py-1 text-xs font-medium capitalize ${
+                            priorityColors[task.priority] ||
+                            "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400"
+                          }`}
+                        >
                           {task.priority}
                         </span>
                       </div>
@@ -168,6 +200,7 @@ function KanbanBoard({
                         {col.id !== "done" && (
                           <button
                             onClick={() => moveTask(task._id, "done")}
+                            type="button"
                           >
                             <Check size={14} />
                           </button>
@@ -175,6 +208,7 @@ function KanbanBoard({
 
                         <button
                           onClick={() => deleteTask(task._id)}
+                          type="button"
                         >
                           <Trash2 size={14} />
                         </button>
