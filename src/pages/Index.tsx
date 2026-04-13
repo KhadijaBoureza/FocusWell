@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
 
 import { Task } from "@/types/dashboard";
 import DashboardSidebar from "../components/dashboard/DashboardSidebar";
@@ -14,16 +14,30 @@ import ThoughtOrganizer from "../components/dashboard/ThoughtOrganizer";
 import WeeklyAnalytics from "../components/dashboard/WeeklyAnalytics";
 
 function Index() {
-
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [analyticsRefreshKey, setAnalyticsRefreshKey] = useState(0);
 
   useEffect(() => {
-    fetch("http://localhost:5000/tasks")
-      .then((res) => res.json())
-      .then((data) => setTasks(data))
-      .catch((err) => console.error(err));
+    const loadTasks = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/tasks");
+        const data = await res.json();
+        setTasks(data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadTasks();
+
+    const interval = setInterval(() => {
+      loadTasks();
+      setAnalyticsRefreshKey((prev) => prev + 1);
+    }, 3000);
+
+    return () => clearInterval(interval);
   }, []);
-  const [activeTab, setActiveTab] = useState("dashboard");
 
   const hour = new Date().getHours();
 
@@ -38,14 +52,14 @@ function Index() {
 
       case "timer":
         return (
-          <div className="max-w-md mx-auto">
+          <div className="mx-auto max-w-md">
             <PomodoroTimer />
           </div>
         );
 
       case "calendar":
         return (
-          <div className="max-w-md mx-auto">
+          <div className="mx-auto max-w-md">
             <CalendarWidget />
           </div>
         );
@@ -60,14 +74,19 @@ function Index() {
         return <RemindersWidget />;
 
       case "analytics":
-        return <WeeklyAnalytics />;
+        return (
+          <WeeklyAnalytics
+            tasks={tasks}
+            refreshKey={analyticsRefreshKey}
+          />
+        );
 
       default:
         return (
           <div className="space-y-6">
             <StatsBar tasks={tasks} />
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
               <div className="lg:col-span-2">
                 <KanbanBoard tasks={tasks} setTasks={setTasks} />
               </div>
@@ -77,7 +96,7 @@ function Index() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               <CalendarWidget />
               <NotesWidget />
 
@@ -87,7 +106,10 @@ function Index() {
               </div>
             </div>
 
-            <WeeklyAnalytics />
+            <WeeklyAnalytics
+              tasks={tasks}
+              refreshKey={analyticsRefreshKey}
+            />
           </div>
         );
     }
@@ -97,17 +119,14 @@ function Index() {
     <div className="flex min-h-screen bg-background">
       <DashboardSidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
-      <div className="flex-1 flex flex-col">
+      <div className="flex flex-1 flex-col">
         <MobileNav activeTab={activeTab} onTabChange={setActiveTab} />
 
-        {/* Header */}
         <header className="flex items-center justify-between p-4 md:p-6">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold">
+            <h1 className="text-xl font-bold md:text-2xl">
               {activeTab === "dashboard" ? (
-                <>
-                  {greeting} c
-                </>
+                <>{greeting} c</>
               ) : (
                 <span className="capitalize">
                   {activeTab === "analytics"
@@ -117,7 +136,7 @@ function Index() {
               )}
             </h1>
 
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="mt-1 text-sm text-muted-foreground">
               {activeTab === "dashboard"
                 ? "Here's your productivity overview"
                 : "Stay focused and productive"}
@@ -127,10 +146,7 @@ function Index() {
           <ThemeToggle />
         </header>
 
-        {/* Main content */}
-        <main className="flex-1 px-4 md:px-6 pb-8">
-          {renderContent()}
-        </main>
+        <main className="flex-1 px-4 pb-8 md:px-6">{renderContent()}</main>
       </div>
     </div>
   );
