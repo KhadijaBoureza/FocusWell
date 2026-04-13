@@ -8,13 +8,16 @@ export const api = {
   },
 
   async saveSession(data: any) {
-    await fetch(`${BASE}/pomodoro/session`, {
+    const res = await fetch(`${BASE}/pomodoro/session`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(data),
     });
+
+    if (!res.ok) throw new Error("Failed to save session");
+    return await res.json();
   },
 
   async getTasks() {
@@ -24,12 +27,15 @@ export const api = {
   },
 
   async saveSettings(durations: any) {
-    await fetch(`${BASE}/pomodoro/settings`, {
+    const res = await fetch(`${BASE}/pomodoro/settings`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(durations),
     });
+
+    if (!res.ok) throw new Error("Failed to save settings");
+    return await res.json();
   },
 };
