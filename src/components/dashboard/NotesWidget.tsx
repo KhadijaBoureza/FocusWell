@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Plus, Trash2, Edit3, X, Save } from "lucide-react";
-import { Note } from "@/types/dashboard";
+import { Note, NoteColor } from "@/types/dashboard";
 
 // ❌ OLD (Phase 1 - localStorage)
 
@@ -23,8 +23,8 @@ function NotesWidget() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
 
-  const colors = ["violet", "blue", "cyan"];
-  const [selectedColor, setSelectedColor] = useState("violet");
+  const colors: NoteColor[] = ["violet", "blue", "cyan"];
+  const [selectedColor, setSelectedColor] = useState<NoteColor>("violet");
 
   useEffect(() => {
     fetch("http://localhost:5000/notes")
@@ -101,6 +101,7 @@ function NotesWidget() {
 
     setTitle("");
     setContent("");
+    setSelectedColor("violet");
     setIsAdding(false);
   }
 
@@ -120,24 +121,34 @@ function NotesWidget() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ title, content }),
+      body: JSON.stringify({ title, content, color: selectedColor }),
     });
 
     if (res.ok) {
       setNotes((prev) =>
-        prev.map((n) => (n._id === id ? { ...n, title, content } : n))
+        prev.map((n) =>
+          n._id === id ? { ...n, title, content, color: selectedColor } : n
+        )
       );
 
       setEditingId(null);
       setTitle("");
       setContent("");
+      setSelectedColor("violet");
     }
   }
 
+  // function startEdit(note: Note) {
+  //   setEditingId(note._id);
+  //   setTitle(note.title);
+  //   setContent(note.content);
+  //   setIsAdding(false);
+  // }
   function startEdit(note: Note) {
     setEditingId(note._id);
     setTitle(note.title);
     setContent(note.content);
+    setSelectedColor(note.color);
     setIsAdding(false);
   }
 
@@ -153,6 +164,7 @@ function NotesWidget() {
             setEditingId(null);
             setTitle("");
             setContent("");
+            setSelectedColor("violet");
           }}
           className="rounded-md p-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground"
         >
@@ -184,17 +196,15 @@ function NotesWidget() {
                 <button
                   key={c}
                   onClick={() => setSelectedColor(c)}
-                  className={`h-5 w-5 rounded-full border-2 transition ${
-                    c === "violet"
-                      ? "bg-purple-500"
-                      : c === "blue"
+                  className={`h-5 w-5 rounded-full border-2 transition ${c === "violet"
+                    ? "bg-purple-500"
+                    : c === "blue"
                       ? "bg-blue-500"
                       : "bg-cyan-500"
-                  } ${
-                    selectedColor === c
+                    } ${selectedColor === c
                       ? "scale-110 border-foreground"
                       : "border-transparent"
-                  }`}
+                    }`}
                 />
               ))}
             </div>
@@ -214,9 +224,8 @@ function NotesWidget() {
         {notes.map((note) => (
           <div
             key={note._id}
-            className={`group rounded-r-md border-l-2 ${
-              colorMap[note.color] || "border-l-purple-500"
-            } bg-muted/20 p-3`}
+            className={`group rounded-r-md border-l-2 ${colorMap[note.color] || "border-l-purple-500"
+              } bg-muted/20 p-3`}
           >
             {editingId === note._id ? (
               <div className="space-y-2">
@@ -233,12 +242,32 @@ function NotesWidget() {
                   className="w-full resize-none rounded border border-border bg-background px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                 />
 
-                <button
-                  onClick={() => saveEdit(note._id)}
-                  className="p-1 text-green-600 hover:text-green-500"
-                >
-                  <Save size={14} />
-                </button>
+                <div className="flex items-center justify-between">
+                  <div className="flex gap-2">
+                    {colors.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => setSelectedColor(c)}
+                        className={`h-4 w-4 rounded-full border-2 transition ${c === "violet"
+                          ? "bg-purple-500"
+                          : c === "blue"
+                            ? "bg-blue-500"
+                            : "bg-cyan-500"
+                          } ${selectedColor === c
+                            ? "scale-110 border-foreground"
+                            : "border-transparent"
+                          }`}
+                      />
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => saveEdit(note._id)}
+                    className="p-1 text-green-600 hover:text-green-500"
+                  >
+                    <Save size={14} />
+                  </button>
+                </div>
               </div>
             ) : (
               <>
