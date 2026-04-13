@@ -118,8 +118,12 @@
 }
 
 @layer utilities {
- .glass-card {
-    @apply bg-card border border-border rounded-xl shadow-sm;
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-xl border border-border rounded-xl shadow-sm;
+  }
+
+  .dark .glass-card {
+    @apply bg-card/60 border-border/50;
   }
 
   .neon-glow-violet {
@@ -158,21 +162,32 @@
   }
 
   .neon-border-violet {
-    border-color: hsl(var(--neon-violet) / 0.2);
-  }
-  .dark .neon-border-violet {
-    border-color: hsl(var(--neon-violet) / 0.4);
-    box-shadow: inset 0 0 15px hsl(var(--neon-violet) / 0.03), 0 0 15px hsl(var(--neon-violet) / 0.08);
-  }
+  border-color: hsl(var(--neon-violet) / 0.45) ;
+  box-shadow:
+    inset 0 0 15px hsl(var(--neon-violet) / 0.03),
+    0 0 15px hsl(var(--neon-violet) / 0.08);
+}
 
-  .neon-border-blue {
-    border-color: hsl(var(--neon-blue) / 0.2);
-  }
-  .dark .neon-border-blue {
-    border-color: hsl(var(--neon-blue) / 0.4);
-    box-shadow: inset 0 0 15px hsl(var(--neon-blue) / 0.03), 0 0 15px hsl(var(--neon-blue) / 0.08);
-  }
+.dark .neon-border-violet {
+  border-color: hsl(var(--neon-violet) / 0.45) ;
+  box-shadow:
+    inset 0 0 15px hsl(var(--neon-violet) / 0.03),
+    0 0 15px hsl(var(--neon-violet) / 0.08);
+}
 
+.neon-border-blue {
+  border-color: hsl(var(--neon-blue) / 0.45) ;
+  box-shadow:
+    inset 0 0 15px hsl(var(--neon-blue) / 0.03),
+    0 0 15px hsl(var(--neon-blue) / 0.08);
+}
+
+.dark .neon-border-blue {
+  border-color: hsl(var(--neon-blue) / 0.45);
+  box-shadow:
+    inset 0 0 15px hsl(var(--neon-blue) / 0.03),
+    0 0 15px hsl(var(--neon-blue) / 0.08);
+}
   .scrollbar-thin::-webkit-scrollbar {
     width: 4px;
   }
