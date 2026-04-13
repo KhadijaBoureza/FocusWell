@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { Plus, GripVertical, Trash2, Check } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Check,
+  Pencil,
+  X,
+  Save,
+} from "lucide-react";
 import { Task, KanbanColumn, TaskPriority } from "@/types/dashboard";
 
 const COLUMNS: { id: KanbanColumn; title: string; colorClass: string }[] = [
@@ -26,6 +33,10 @@ function KanbanBoard({
   const [draggedTask, setDraggedTask] = useState<string | null>(null);
   const [selectedPriority, setSelectedPriority] =
     useState<TaskPriority>("medium");
+
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editPriority, setEditPriority] = useState<TaskPriority>("medium");
 
   async function addTask(column: KanbanColumn) {
     if (!newTaskTitle.trim()) return;
@@ -75,15 +86,15 @@ function KanbanBoard({
     const updatedFields =
       newColumn === "done"
         ? {
-            column: newColumn,
-            completed: true,
-            completedAt: now,
-          }
+          column: newColumn,
+          completed: true,
+          completedAt: now,
+        }
         : {
-            column: newColumn,
-            completed: false,
-            completedAt: null,
-          };
+          column: newColumn,
+          completed: false,
+          completedAt: null,
+        };
 
     const res = await fetch(`http://localhost:5000/tasks/${taskId}`, {
       method: "PUT",
@@ -102,12 +113,55 @@ function KanbanBoard({
       prev.map((t) =>
         t._id === taskId
           ? {
-              ...t,
-              ...updatedFields,
-            }
+            ...t,
+            ...updatedFields,
+          }
           : t
       )
     );
+  }
+
+  function startEdit(task: Task) {
+    setEditingTaskId(task._id);
+    setEditTitle(task.title);
+    setEditPriority(task.priority);
+    setAddingTo(null);
+  }
+
+  function cancelEdit() {
+    setEditingTaskId(null);
+    setEditTitle("");
+    setEditPriority("medium");
+  }
+
+  async function saveEdit(taskId: string) {
+    if (!editTitle.trim()) return;
+
+    const payload = {
+      title: editTitle,
+      priority: editPriority,
+    };
+
+    const res = await fetch(`http://localhost:5000/tasks/${taskId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      console.error("Failed to edit task");
+      return;
+    }
+
+    const updatedTask = await res.json();
+
+    setTasks((prev) =>
+      prev.map((t) => (t._id === taskId ? updatedTask : t))
+    );
+
+    cancelEdit();
   }
 
   function handleDragStart(taskId: string) {
@@ -152,6 +206,7 @@ function KanbanBoard({
                   setAddingTo(addingTo === col.id ? null : col.id);
                   setNewTaskTitle("");
                   setSelectedPriority("medium");
+                  setEditingTaskId(null);
                 }}
                 className="rounded p-1 text-muted-foreground transition-colors hover:text-foreground"
                 type="button"
@@ -180,13 +235,11 @@ function KanbanBoard({
                         key={priority}
                         type="button"
                         onClick={() => setSelectedPriority(priority)}
-                        className={`rounded px-2 py-1 text-[10px] font-mono capitalize transition-all ${
-                          priorityColors[priority]
-                        } ${
-                          selectedPriority === priority
-                            ? "ring-1 ring-foreground scale-105"
+                        className={`rounded px-2 py-1 text-[10px] font-mono capitalize transition-all ${priorityColors[priority]
+                          } ${selectedPriority === priority
+                            ? "scale-105 ring-1 ring-foreground"
                             : "opacity-80 hover:opacity-100"
-                        }`}
+                          }`}
                       >
                         {priority}
                       </button>
@@ -202,57 +255,111 @@ function KanbanBoard({
                 .map((task) => (
                   <div
                     key={task._id}
-                    draggable
+                    draggable={editingTaskId !== task._id}
                     onDragStart={() => handleDragStart(task._id)}
-                    className={`group cursor-grab rounded-md border border-border/50 bg-card p-3 transition-all hover:border-primary/30 active:cursor-grabbing ${
-                      draggedTask === task._id ? "opacity-50" : ""
-                    }`}
+                    className={`group cursor-grab rounded-md border border-border/50 bg-card p-3 transition-all hover:border-primary/30 active:cursor-grabbing ${draggedTask === task._id ? "opacity-50" : ""
+                      }`}
                   >
-                    <div className="flex items-start gap-2">
-                      <GripVertical
-                        size={14}
-                        className="mt-0.5 shrink-0 text-muted-foreground"
-                      />
+                    <div className="flex items-start justify-between gap-2">
 
-                      <div className="min-w-0 flex-1">
-                        <p
-                          className={`text-sm ${
-                            task.completed
-                              ? "line-through text-muted-foreground"
-                              : "text-foreground"
-                          }`}
-                        >
-                          {task.title}
-                        </p>
+                      <div className="min-w-0 flex-1 overflow-hidden">
+                        {editingTaskId === task._id ? (
+                          <div className="space-y-2">
+                            <input
+                              value={editTitle}
+                              onChange={(e) => setEditTitle(e.target.value)}
+                              className="w-full rounded-md border border-border bg-background/50 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                            />
 
-                        <span
-                          className={`mt-1 inline-block rounded px-2 py-0.5 text-[10px] font-mono capitalize ${
-                            priorityColors[task.priority] ||
-                            "bg-muted text-muted-foreground"
-                          }`}
-                        >
-                          {task.priority}
-                        </span>
+                            <div className="flex gap-2">
+                              {(["low", "medium", "high"] as TaskPriority[]).map(
+                                (priority) => (
+                                  <button
+                                    key={priority}
+                                    type="button"
+                                    onClick={() => setEditPriority(priority)}
+                                    className={`rounded px-2 py-1 text-[10px] font-mono capitalize transition-all ${priorityColors[priority]
+                                      } ${editPriority === priority
+                                        ? "scale-105 ring-1 ring-foreground"
+                                        : "opacity-80 hover:opacity-100"
+                                      }`}
+                                  >
+                                    {priority}
+                                  </button>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <p
+                              className={`text-sm break-words whitespace-normal ${task.completed
+                                  ? "line-through text-muted-foreground"
+                                  : "text-foreground"
+                                }`}
+                            >
+                              {task.title}
+                            </p>
+
+                            <span
+                              className={`mt-1 inline-block rounded px-2 py-0.5 text-[10px] font-mono capitalize ${priorityColors[task.priority] ||
+                                "bg-muted text-muted-foreground"
+                                }`}
+                            >
+                              {task.priority}
+                            </span>
+                          </>
+                        )}
                       </div>
 
                       <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                        {col.id !== "done" && (
-                          <button
-                            onClick={() => moveTask(task._id, "done")}
-                            className="p-1 text-neon-green hover:text-neon-green/80"
-                            type="button"
-                          >
-                            <Check size={14} />
-                          </button>
-                        )}
+                        {editingTaskId === task._id ? (
+                          <>
+                            <button
+                              onClick={() => saveEdit(task._id)}
+                              className="p-1 text-neon-green hover:text-neon-green/80"
+                              type="button"
+                            >
+                              <Save size={14} />
+                            </button>
 
-                        <button
-                          onClick={() => deleteTask(task._id)}
-                          className="p-1 text-destructive hover:text-destructive/80"
-                          type="button"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                            <button
+                              onClick={cancelEdit}
+                              className="p-1 text-muted-foreground hover:text-foreground"
+                              type="button"
+                            >
+                              <X size={14} />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => startEdit(task)}
+                              className="p-1 text-muted-foreground hover:text-foreground"
+                              type="button"
+                            >
+                              <Pencil size={14} />
+                            </button>
+
+                            {col.id !== "done" && (
+                              <button
+                                onClick={() => moveTask(task._id, "done")}
+                                className="p-1 text-neon-green hover:text-neon-green/80"
+                                type="button"
+                              >
+                                <Check size={14} />
+                              </button>
+                            )}
+
+                            <button
+                              onClick={() => deleteTask(task._id)}
+                              className="p-1 text-destructive hover:text-destructive/80"
+                              type="button"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
