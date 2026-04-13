@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import { Task } from "@/types/dashboard";
 import { BarChart3, TrendingUp } from "lucide-react";
 import {
   BarChart,
@@ -10,13 +11,17 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
-import { Task } from "@/types/dashboard";
 
 type WeeklyDataItem = {
   date: string;
   day: string;
   focus: number;
   tasks: number;
+};
+
+type WeeklyAnalyticsProps = {
+  tasks: Task[];
+  refreshKey: number;
 };
 
 function calculateDailyTrend(data: WeeklyDataItem[]) {
@@ -32,17 +37,16 @@ function calculateDailyTrend(data: WeeklyDataItem[]) {
     return todayTasks > 0 ? 100 : 0;
   }
 
-  return Math.round(((todayTasks - yesterdayTasks) / yesterdayTasks) * 100);
+  return Math.round(((todayTasks - todayTasks) / yesterdayTasks) * 100);
 }
 
-function WeeklyAnalytics() {
+function WeeklyAnalytics({ tasks, refreshKey }: WeeklyAnalyticsProps) {
   const [weeklyData, setWeeklyData] = useState<WeeklyDataItem[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
       try {
         const pomodoro = await api.getPomodoro();
-        const tasks: Task[] = await api.getTasks();
 
         const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         const last7Days: WeeklyDataItem[] = [];
@@ -59,7 +63,6 @@ function WeeklyAnalytics() {
           });
         }
 
-        // MAP FOCUS DATA
         pomodoro.sessions.forEach((s: any) => {
           if (!s.completedAt) return;
 
@@ -71,7 +74,6 @@ function WeeklyAnalytics() {
           }
         });
 
-        // MAP TASK DATA
         tasks.forEach((task) => {
           if (task.column !== "done" || !task.completedAt) return;
 
@@ -90,7 +92,7 @@ function WeeklyAnalytics() {
     };
 
     loadData();
-  }, []);
+  }, [tasks, refreshKey]);
 
   const totalFocus = weeklyData.reduce((sum, day) => sum + day.focus, 0);
   const totalTasks = weeklyData.reduce((sum, day) => sum + day.tasks, 0);
