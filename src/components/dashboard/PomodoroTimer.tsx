@@ -272,13 +272,10 @@ const PomodoroTimer = () => {
     else switchMode("work");
   };
 
-  const adjustDuration = (
-    key: keyof typeof DEFAULT_DURATIONS,
-    delta: number
-  ) => {
+  const adjustDuration = (key: keyof typeof DEFAULT_DURATIONS, delta: number) => {
     setTempDurations((prev) => ({
       ...prev,
-      [key]: Math.max(1, Math.min(120, prev[key] + delta)),
+      [key]: Math.max(0, Math.min(120, prev[key] + delta)),
     }));
   };
 
@@ -396,8 +393,8 @@ const PomodoroTimer = () => {
             key={m}
             onClick={() => switchMode(m)}
             className={`rounded-lg px-3 py-1.5 text-xs font-mono transition-all ${mode === m
-                ? "bg-primary/15 text-primary"
-                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+              ? "bg-primary/15 text-primary"
+              : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
               }`}
           >
             {MODE_LABELS[m]}
