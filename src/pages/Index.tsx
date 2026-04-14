@@ -91,6 +91,7 @@ function Index() {
           <div className="space-y-6">
             <StatsBar tasks={tasks} />
 
+            {/* Keep tasks + timer exactly as before */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
               <div className="lg:col-span-2">
                 <KanbanBoard tasks={tasks} setTasks={setTasks} />
@@ -101,12 +102,27 @@ function Index() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              <CalendarWidget />
-              <NotesWidget />
+            {/* New dashboard layout below */}
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+              {/* Top row */}
+              <div className="lg:col-span-4">
+                <CalendarWidget />
+              </div>
 
-              <div className="space-y-6">
+              <div className="lg:col-span-4">
+                <NotesWidget />
+              </div>
+
+              <div className="lg:col-span-4">
                 <RemindersWidget />
+              </div>
+
+              {/* Bottom row */}
+              <div className="lg:col-span-8">
+                <AchievementsPreview />
+              </div>
+
+              <div className="lg:col-span-4">
                 <ThoughtOrganizer />
               </div>
             </div>
