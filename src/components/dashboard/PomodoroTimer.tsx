@@ -70,7 +70,7 @@ const PomodoroTimer = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [tempDurations, setTempDurations] = useState(durations);
 
-  // ✅ OLD localStorage stats
+  // OLD localStorage stats
   // const [sessions, setSessions] = useLocalStorage("focuswell-pomodoro-sessions", 0);
   // const [todayMinutes, setTodayMinutes] = useLocalStorage("focuswell-today-minutes", 0);
   // const [sessionLog, setSessionLog] = useLocalStorage<SessionLog[]>("focuswell-session-log", []);
@@ -97,8 +97,15 @@ const PomodoroTimer = () => {
         }
 
         if (Array.isArray(data.sessions)) {
-          const workSessions = data.sessions.filter((s: any) => s.mode === "work");
-          setSessions(workSessions.length);
+          const today = new Date().toISOString().split("T")[0];
+
+          const todayWorkSessions = data.sessions.filter(
+            (s: any) =>
+              s.mode === "work" &&
+              String(s.completedAt).startsWith(today)
+          );
+
+          setSessions(todayWorkSessions.length);
         }
 
         if (typeof data.todayMinutes === "number") {
@@ -141,7 +148,7 @@ const PomodoroTimer = () => {
           audio.currentTime = 0;
           audio.muted = false;
         })
-        .catch(() => {});
+        .catch(() => { });
       document.removeEventListener("click", unlockAudio);
     };
 
@@ -155,7 +162,7 @@ const PomodoroTimer = () => {
   const playSound = useCallback(() => {
     if (audioRef.current) {
       audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(() => {});
+      audioRef.current.play().catch(() => { });
     }
   }, []);
 
@@ -206,10 +213,10 @@ const PomodoroTimer = () => {
           return logs.map((l) =>
             l.date === today
               ? {
-                  ...l,
-                  sessions: l.sessions + 1,
-                  totalMinutes: l.totalMinutes + focusMinutes,
-                }
+                ...l,
+                sessions: l.sessions + 1,
+                totalMinutes: l.totalMinutes + focusMinutes,
+              }
               : l
           );
         }
@@ -388,11 +395,10 @@ const PomodoroTimer = () => {
           <button
             key={m}
             onClick={() => switchMode(m)}
-            className={`rounded-lg px-3 py-1.5 text-xs font-mono transition-all ${
-              mode === m
+            className={`rounded-lg px-3 py-1.5 text-xs font-mono transition-all ${mode === m
                 ? "bg-primary/15 text-primary"
                 : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-            }`}
+              }`}
           >
             {MODE_LABELS[m]}
           </button>
@@ -426,9 +432,8 @@ const PomodoroTimer = () => {
 
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span
-            className={`font-mono text-5xl font-bold ${colors.text} ${
-              isFinished ? "animate-pulse" : ""
-            }`}
+            className={`font-mono text-5xl font-bold ${colors.text} ${isFinished ? "animate-pulse" : ""
+              }`}
           >
             {String(minutes).padStart(2, "0")}:
             {String(seconds).padStart(2, "0")}
