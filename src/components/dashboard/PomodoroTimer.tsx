@@ -1,7 +1,23 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Play, Pause, RotateCcw, Coffee, SkipForward, BellOff, Settings, Plus, Minus } from "lucide-react";
+import {
+  Play,
+  Pause,
+  RotateCcw,
+  Coffee,
+  SkipForward,
+  BellOff,
+  Settings,
+  Plus,
+  Minus,
+} from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { api } from "@/lib/api";
 
 const DEFAULT_DURATIONS = { work: 25, shortBreak: 5, longBreak: 15 };
@@ -14,10 +30,25 @@ const MODE_LABELS: Record<Mode, string> = {
   longBreak: "Long Break",
 };
 
-const modeColors: Record<Mode, { stroke: string; text: string; filter: string }> = {
-  work: { stroke: "hsl(var(--primary))", text: "text-primary", filter: "hsl(var(--primary) / 0.5)" },
-  shortBreak: { stroke: "hsl(var(--accent))", text: "text-accent", filter: "hsl(var(--accent) / 0.5)" },
-  longBreak: { stroke: "hsl(var(--secondary))", text: "text-secondary", filter: "hsl(var(--secondary) / 0.5)" },
+const modeColors: Record<
+  Mode,
+  { stroke: string; text: string; filter: string }
+> = {
+  work: {
+    stroke: "hsl(var(--primary))",
+    text: "text-primary",
+    filter: "hsl(var(--primary) / 0.5)",
+  },
+  shortBreak: {
+    stroke: "hsl(var(--accent))",
+    text: "text-accent",
+    filter: "hsl(var(--accent) / 0.5)",
+  },
+  longBreak: {
+    stroke: "hsl(var(--secondary))",
+    text: "text-secondary",
+    filter: "hsl(var(--secondary) / 0.5)",
+  },
 };
 
 interface SessionLog {
@@ -27,7 +58,11 @@ interface SessionLog {
 }
 
 const PomodoroTimer = () => {
-  const [durations, setDurations] = useLocalStorage("focuswell-durations", DEFAULT_DURATIONS);
+  const [durations, setDurations] = useLocalStorage(
+    "focuswell-durations",
+    DEFAULT_DURATIONS
+  );
+
   const [mode, setMode] = useState<Mode>("work");
   const [timeLeft, setTimeLeft] = useState(durations.work * 60);
   const [isRunning, setIsRunning] = useState(false);
@@ -35,10 +70,17 @@ const PomodoroTimer = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [tempDurations, setTempDurations] = useState(durations);
 
-  const [sessions, setSessions] = useLocalStorage("focuswell-pomodoro-sessions", 0);
-  const [todayMinutes, setTodayMinutes] = useLocalStorage("focuswell-today-minutes", 0);
-  const [sessionLog, setSessionLog] = useLocalStorage<SessionLog[]>("focuswell-session-log", []);
-  const [breaks, setBreaks] = useLocalStorage("focuswell-pomodoro-breaks", 0);
+  // ✅ OLD localStorage stats
+  // const [sessions, setSessions] = useLocalStorage("focuswell-pomodoro-sessions", 0);
+  // const [todayMinutes, setTodayMinutes] = useLocalStorage("focuswell-today-minutes", 0);
+  // const [sessionLog, setSessionLog] = useLocalStorage<SessionLog[]>("focuswell-session-log", []);
+  // const [breaks, setBreaks] = useLocalStorage("focuswell-pomodoro-breaks", 0);
+
+  // ✅ NEW backend-driven stats
+  const [sessions, setSessions] = useState(0);
+  const [todayMinutes, setTodayMinutes] = useState(0);
+  const [sessionLog, setSessionLog] = useState<SessionLog[]>([]);
+  const [breaks, setBreaks] = useState(0);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -49,62 +91,41 @@ const PomodoroTimer = () => {
 
         if (!data) return;
 
-        // safely update state
-        if (data.durations) setDurations(data.durations);
-
-        // backend returns sessions as an array, so convert it
-        if (Array.isArray(data.sessions)) {
-          const today = new Date().toISOString().split("T")[0];
-
-          setSessions(data.sessions.length);
-
-          const todaySessions = data.sessions.filter((s: any) =>
-            String(s.completedAt).startsWith(today)
-          );
-
-          const todayMinutesTotal = todaySessions.reduce(
-            (sum: number, s: any) => sum + (s.duration || 0),
-            0
-          );
-
-          setTodayMinutes(todayMinutesTotal);
-
-          const groupedLog = data.sessions.reduce((acc: SessionLog[], s: any) => {
-            const date = String(s.completedAt).split("T")[0];
-            const existing = acc.find((item) => item.date === date);
-
-            if (existing) {
-              existing.sessions += 1;
-              existing.totalMinutes += s.duration || 0;
-            } else {
-              acc.push({
-                date,
-                sessions: 1,
-                totalMinutes: s.duration || 0,
-              });
-            }
-
-            return acc;
-          }, []);
-
-          setSessionLog(groupedLog);
+        if (data.durations) {
+          setDurations(data.durations);
+          setTempDurations(data.durations);
         }
 
-        // sync timer with backend durations
+        if (Array.isArray(data.sessions)) {
+          const workSessions = data.sessions.filter((s: any) => s.mode === "work");
+          setSessions(workSessions.length);
+        }
+
+        if (typeof data.todayMinutes === "number") {
+          setTodayMinutes(data.todayMinutes);
+        }
+
+        if (typeof data.breaks === "number") {
+          setBreaks(data.breaks);
+        }
+
+        if (Array.isArray(data.sessionLog)) {
+          setSessionLog(data.sessionLog);
+        }
+
         if (data.durations?.[mode]) {
           setTimeLeft(data.durations[mode] * 60);
         }
 
         console.log("Loaded from backend ✅");
-      } catch {
-        console.log("Using localStorage fallback ⚡");
+      } catch (err) {
+        console.log("Backend load failed", err);
       }
     };
 
     loadFromBackend();
-  }, []);
+  }, [mode, setDurations]);
 
-  // INIT AUDIO
   useEffect(() => {
     const audio = new Audio("/notification.mp3");
     audio.loop = true;
@@ -113,25 +134,31 @@ const PomodoroTimer = () => {
 
     const unlockAudio = () => {
       audio.muted = true;
-      audio.play().then(() => {
-        audio.pause();
-        audio.currentTime = 0;
-        audio.muted = false;
-      }).catch(() => { });
+      audio
+        .play()
+        .then(() => {
+          audio.pause();
+          audio.currentTime = 0;
+          audio.muted = false;
+        })
+        .catch(() => {});
       document.removeEventListener("click", unlockAudio);
     };
+
     document.addEventListener("click", unlockAudio);
+
+    return () => {
+      document.removeEventListener("click", unlockAudio);
+    };
   }, []);
 
-  // Play sound immediately via callback
   const playSound = useCallback(() => {
     if (audioRef.current) {
       audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(() => { });
+      audioRef.current.play().catch(() => {});
     }
   }, []);
 
-  // TIMER LOOP - uses requestAnimationFrame + Date.now for accuracy
   useEffect(() => {
     if (!isRunning) return;
 
@@ -158,31 +185,35 @@ const PomodoroTimer = () => {
     rafId = requestAnimationFrame(tick);
 
     return () => cancelAnimationFrame(rafId);
-  }, [isRunning, playSound]);
+  }, [isRunning, timeLeft, playSound]);
 
-  // WHEN TIMER ENDS - update stats
   useEffect(() => {
     if (timeLeft !== 0 || isRunning) return;
 
+    const now = new Date().toISOString();
+
     if (mode === "work") {
       const focusMinutes = durations.work;
+
       setSessions((s) => s + 1);
       setTodayMinutes((m) => m + focusMinutes);
 
-      const today = new Date().toISOString().split("T")[0];
+      const today = now.split("T")[0];
       setSessionLog((logs) => {
         const existing = logs.find((l) => l.date === today);
+
         if (existing) {
           return logs.map((l) =>
             l.date === today
               ? {
-                ...l,
-                sessions: l.sessions + 1,
-                totalMinutes: l.totalMinutes + focusMinutes,
-              }
+                  ...l,
+                  sessions: l.sessions + 1,
+                  totalMinutes: l.totalMinutes + focusMinutes,
+                }
               : l
           );
         }
+
         return [
           ...logs,
           { date: today, sessions: 1, totalMinutes: focusMinutes },
@@ -192,19 +223,29 @@ const PomodoroTimer = () => {
       api.saveSession({
         mode: "work",
         duration: durations.work,
-        completedAt: new Date().toISOString(),
+        completedAt: now,
       });
     } else {
       setBreaks((b) => b + 1);
+
+      api.saveSession({
+        mode,
+        duration: durations[mode],
+        completedAt: now,
+      });
     }
-  }, [timeLeft, isRunning, mode, durations.work, setSessions, setTodayMinutes, setSessionLog, setBreaks]);
+  }, [timeLeft, isRunning, mode, durations]);
 
   const switchMode = (newMode: Mode) => {
     setMode(newMode);
     setTimeLeft(durations[newMode] * 60);
     setIsRunning(false);
     setIsFinished(false);
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
   };
 
   const reset = () => {
@@ -212,7 +253,10 @@ const PomodoroTimer = () => {
     setIsRunning(false);
     setIsFinished(false);
 
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
   };
 
   const skipToNext = () => {
@@ -221,7 +265,10 @@ const PomodoroTimer = () => {
     else switchMode("work");
   };
 
-  const adjustDuration = (key: keyof typeof DEFAULT_DURATIONS, delta: number) => {
+  const adjustDuration = (
+    key: keyof typeof DEFAULT_DURATIONS,
+    delta: number
+  ) => {
     setTempDurations((prev) => ({
       ...prev,
       [key]: Math.max(1, Math.min(120, prev[key] + delta)),
@@ -230,59 +277,83 @@ const PomodoroTimer = () => {
 
   const saveDurations = () => {
     setDurations(tempDurations);
-    // Reset current timer to new duration
     setTimeLeft(tempDurations[mode] * 60);
     setIsRunning(false);
     setIsFinished(false);
     setSettingsOpen(false);
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
   };
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
   const progress = 1 - timeLeft / (durations[mode] * 60);
   const circumference = 2 * Math.PI * 90;
-  const finishedColor = { stroke: "hsl(var(--destructive))", text: "text-destructive", filter: "hsl(var(--destructive) / 0.5)" };
+
+  const finishedColor = {
+    stroke: "hsl(var(--destructive))",
+    text: "text-destructive",
+    filter: "hsl(var(--destructive) / 0.5)",
+  };
+
   const colors = isFinished ? finishedColor : modeColors[mode];
 
   return (
-    <div className="glass-card neon-border-violet p-6 flex flex-col items-center">
-      <div className="w-full flex items-center justify-between mb-4">
-        {/* Settings button */}
-        <Dialog open={settingsOpen} onOpenChange={(open) => { setSettingsOpen(open); if (open) setTempDurations(durations); }}>
+    <div className="glass-card neon-border-violet flex flex-col items-center p-6">
+      <div className="mb-4 flex w-full items-center justify-between">
+        <Dialog
+          open={settingsOpen}
+          onOpenChange={(open) => {
+            setSettingsOpen(open);
+            if (open) setTempDurations(durations);
+          }}
+        >
           <DialogTrigger asChild>
-            <button className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all">
+            <button className="rounded-lg p-1.5 text-muted-foreground transition-all hover:bg-muted/50 hover:text-foreground">
               <Settings size={18} />
             </button>
           </DialogTrigger>
+
           <DialogContent className="sm:max-w-sm">
             <DialogHeader>
               <DialogTitle className="font-mono">Timer Settings</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 mt-2">
+
+            <div className="mt-2 space-y-4">
               {(["work", "shortBreak", "longBreak"] as const).map((key) => (
                 <div key={key} className="flex items-center justify-between">
-                  <span className="text-sm text-foreground">{MODE_LABELS[key]}</span>
+                  <span className="text-sm text-foreground">
+                    {MODE_LABELS[key]}
+                  </span>
+
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => adjustDuration(key, -5)}
-                      className="p-1.5 rounded-md bg-muted hover:bg-muted/80 text-foreground transition-all"
+                      className="rounded-md bg-muted p-1.5 text-foreground transition-all hover:bg-muted/80"
                     >
                       <Minus size={14} />
                     </button>
-                    <span className="font-mono text-sm w-12 text-center text-foreground">{tempDurations[key]} min</span>
+
+                    <span className="w-12 text-center font-mono text-sm text-foreground">
+                      {tempDurations[key]} min
+                    </span>
+
                     <button
                       onClick={() => adjustDuration(key, 5)}
-                      className="p-1.5 rounded-md bg-muted hover:bg-muted/80 text-foreground transition-all"
+                      className="rounded-md bg-muted p-1.5 text-foreground transition-all hover:bg-muted/80"
                     >
                       <Plus size={14} />
                     </button>
                   </div>
                 </div>
               ))}
+
               <button
                 onClick={saveDurations}
-                className="w-full py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-all"
+                className="w-full rounded-lg bg-primary py-2 text-sm font-medium text-primary-foreground transition-all hover:bg-primary/90"
               >
                 Save
               </button>
@@ -290,15 +361,20 @@ const PomodoroTimer = () => {
           </DialogContent>
         </Dialog>
 
-        <h2 className="font-mono text-lg font-semibold text-foreground">Focus Timer</h2>
+        <h2 className="font-mono text-lg font-semibold text-foreground">
+          Focus Timer
+        </h2>
 
         {isFinished ? (
           <button
             onClick={() => {
-              if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
+              if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current.currentTime = 0;
+              }
               reset();
             }}
-            className="p-1.5 rounded-lg text-destructive hover:bg-destructive/15 transition-all animate-pulse"
+            className="animate-pulse rounded-lg p-1.5 text-destructive transition-all hover:bg-destructive/15"
           >
             <BellOff size={18} />
           </button>
@@ -307,28 +383,39 @@ const PomodoroTimer = () => {
         )}
       </div>
 
-      {/* MODES */}
-      <div className="flex gap-2 mb-6">
+      <div className="mb-6 flex gap-2">
         {(["work", "shortBreak", "longBreak"] as const).map((m) => (
           <button
             key={m}
             onClick={() => switchMode(m)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all ${mode === m ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-              }`}
+            className={`rounded-lg px-3 py-1.5 text-xs font-mono transition-all ${
+              mode === m
+                ? "bg-primary/15 text-primary"
+                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+            }`}
           >
             {MODE_LABELS[m]}
           </button>
         ))}
       </div>
 
-      {/* TIMER */}
-      <div className="relative w-52 h-52 mb-6">
-        <svg className="w-full h-full -rotate-90" viewBox="0 0 200 200">
-          <circle cx="100" cy="100" r="90" stroke="hsl(var(--chart-track))" strokeWidth="6" fill="none" />
+      <div className="relative mb-6 h-52 w-52">
+        <svg className="h-full w-full -rotate-90" viewBox="0 0 200 200">
           <circle
-            cx="100" cy="100" r="90"
+            cx="100"
+            cy="100"
+            r="90"
+            stroke="hsl(var(--chart-track))"
+            strokeWidth="6"
+            fill="none"
+          />
+          <circle
+            cx="100"
+            cy="100"
+            r="90"
             stroke={colors.stroke}
-            strokeWidth="6" fill="none"
+            strokeWidth="6"
+            fill="none"
             strokeLinecap="round"
             strokeDasharray={circumference}
             strokeDashoffset={circumference * (1 - progress)}
@@ -336,29 +423,46 @@ const PomodoroTimer = () => {
             style={{ filter: `drop-shadow(0 0 8px ${colors.filter})` }}
           />
         </svg>
+
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className={`font-mono text-5xl font-bold ${colors.text} ${isFinished ? "animate-pulse" : ""}`}>
-            {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
+          <span
+            className={`font-mono text-5xl font-bold ${colors.text} ${
+              isFinished ? "animate-pulse" : ""
+            }`}
+          >
+            {String(minutes).padStart(2, "0")}:
+            {String(seconds).padStart(2, "0")}
           </span>
-          <span className="text-xs text-muted-foreground mt-2">{MODE_LABELS[mode]}</span>
+          <span className="mt-2 text-xs text-muted-foreground">
+            {MODE_LABELS[mode]}
+          </span>
         </div>
       </div>
 
-      {/* CONTROLS */}
       <div className="flex gap-3">
-        <button onClick={() => setIsRunning(!isRunning)} className="p-3.5 rounded-full bg-primary/15 text-primary hover:bg-primary/25 transition-all">
+        <button
+          onClick={() => setIsRunning(!isRunning)}
+          className="rounded-full bg-primary/15 p-3.5 text-primary transition-all hover:bg-primary/25"
+        >
           {isRunning ? <Pause size={22} /> : <Play size={22} />}
         </button>
-        <button onClick={reset} className="p-3.5 rounded-full bg-muted text-muted-foreground hover:text-foreground transition-all">
+
+        <button
+          onClick={reset}
+          className="rounded-full bg-muted p-3.5 text-muted-foreground transition-all hover:text-foreground"
+        >
           <RotateCcw size={22} />
         </button>
-        <button onClick={skipToNext} className="p-3.5 rounded-full bg-muted text-muted-foreground hover:text-foreground transition-all">
+
+        <button
+          onClick={skipToNext}
+          className="rounded-full bg-muted p-3.5 text-muted-foreground transition-all hover:text-foreground"
+        >
           <SkipForward size={22} />
         </button>
       </div>
 
-      {/* STATS */}
-      <div className="flex items-center gap-4 mt-5 text-xs text-muted-foreground">
+      <div className="mt-5 flex items-center gap-4 text-xs text-muted-foreground">
         <div className="flex items-center gap-1.5">
           <Coffee size={14} />
           <span>{sessions} sessions</span>

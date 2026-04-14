@@ -273,9 +273,56 @@ app.get("/pomodoro", async (req, res) => {
   try {
     const sessions = await PomodoroSession.find().sort({ completedAt: -1 });
 
+    const today = new Date();
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const startOfTomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+    const todaySessions = sessions.filter((s) => {
+      const completed = new Date(s.completedAt);
+      return completed >= startOfToday && completed < startOfTomorrow;
+    });
+
+    const todayWorkSessions = todaySessions.filter((s) => s.mode === "work");
+    const todayBreakSessions = todaySessions.filter(
+      (s) => s.mode === "shortBreak" || s.mode === "longBreak"
+    );
+
+    const todayMinutes = todayWorkSessions.reduce(
+      (sum, s) => sum + (s.duration || 0),
+      0
+    );
+
+    const breaks = todayBreakSessions.length;
+
+    const sessionLogMap = {};
+
+    sessions.forEach((s) => {
+      const date = new Date(s.completedAt).toISOString().split("T")[0];
+
+      if (!sessionLogMap[date]) {
+        sessionLogMap[date] = {
+          date,
+          sessions: 0,
+          totalMinutes: 0,
+        };
+      }
+
+      if (s.mode === "work") {
+        sessionLogMap[date].sessions += 1;
+        sessionLogMap[date].totalMinutes += s.duration || 0;
+      }
+    });
+
+    const sessionLog = Object.values(sessionLogMap).sort((a, b) =>
+      b.date.localeCompare(a.date)
+    );
+
     res.json({
       sessions,
       durations: { work: 25, shortBreak: 5, longBreak: 15 },
+      todayMinutes,
+      breaks,
+      sessionLog,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
