@@ -196,7 +196,6 @@ const PomodoroTimer = () => {
 
   useEffect(() => {
     if (timeLeft !== 0 || isRunning) return;
-
     const now = new Date().toISOString();
 
     if (mode === "work") {
@@ -272,11 +271,29 @@ const PomodoroTimer = () => {
     else switchMode("work");
   };
 
-  const adjustDuration = (key: keyof typeof DEFAULT_DURATIONS, delta: number) => {
-    setTempDurations((prev) => ({
-      ...prev,
-      [key]: Math.max(0, Math.min(120, prev[key] + delta)),
-    }));
+  const adjustDuration = (
+    key: keyof typeof DEFAULT_DURATIONS,
+    delta: number
+  ) => {
+    setTempDurations((prev) => {
+      const current = prev[key];
+      let next = current;
+
+      if (delta > 0) {
+        next = current < 5 ? 5 : current + 5;
+      } else {
+        if (current <= 5) {
+          next = 1;
+        } else {
+          next = current - 5;
+        }
+      }
+
+      return {
+        ...prev,
+        [key]: Math.max(1, Math.min(120, next)),
+      };
+    });
   };
 
   const saveDurations = () => {
@@ -294,7 +311,8 @@ const PomodoroTimer = () => {
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
-  const progress = 1 - timeLeft / (durations[mode] * 60);
+  const totalSeconds = durations[mode] * 60;
+  const progress = 1 - timeLeft / totalSeconds;
   const circumference = 2 * Math.PI * 90;
 
   const finishedColor = {
