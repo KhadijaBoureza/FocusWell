@@ -1,26 +1,11 @@
 import { useState, useEffect } from "react";
 
-/*
-  Custom hook that syncs React state with localStorage.
-  Useful for persisting user data such as tasks, notes, or preferences.
-*/
-
-export function useLocalStorage<T>(
-  key: string,
-  initialValue: T
-): [T, React.Dispatch<React.SetStateAction<T>>] {
-
+export function useLocalStorage<T>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {
       const item = window.localStorage.getItem(key);
-
-      if (!item) {
-        return initialValue;
-      }
-
-      return JSON.parse(item) as T;
+      return item ? JSON.parse(item) : initialValue;
     } catch {
-      // If parsing fails, fallback to initial value
       return initialValue;
     }
   });
@@ -29,7 +14,7 @@ export function useLocalStorage<T>(
     try {
       window.localStorage.setItem(key, JSON.stringify(storedValue));
     } catch (error) {
-      console.error("Failed to save to localStorage:", error);
+      console.error("Error saving to localStorage:", error);
     }
   }, [key, storedValue]);
 

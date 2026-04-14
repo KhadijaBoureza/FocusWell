@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Plus,
   Trash2,
@@ -38,6 +38,51 @@ function KanbanBoard({
   const [editTitle, setEditTitle] = useState("");
   const [editPriority, setEditPriority] = useState<TaskPriority>("medium");
 
+  const addTaskContainerRef = useRef<HTMLDivElement | null>(null);
+  const addTaskInputRef = useRef<HTMLInputElement | null>(null);
+
+  function resetAddTask() {
+    setNewTaskTitle("");
+    setSelectedPriority("medium");
+    setAddingTo(null);
+  }
+
+  function handleAddTaskKeyDown(
+    e: React.KeyboardEvent<HTMLDivElement>,
+    column: KanbanColumn
+  ) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addTask(column);
+    }
+
+    if (e.key === "Escape") {
+      e.preventDefault();
+      resetAddTask();
+    }
+  }
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        addingTo &&
+        addTaskContainerRef.current &&
+        !addTaskContainerRef.current.contains(event.target as Node)
+      ) {
+        resetAddTask();
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [addingTo]);
+
+  useEffect(() => {
+    if (addingTo && addTaskInputRef.current) {
+      addTaskInputRef.current.focus();
+    }
+  }, [addingTo]);
+
   async function addTask(column: KanbanColumn) {
     if (!newTaskTitle.trim()) return;
 
@@ -65,9 +110,7 @@ function KanbanBoard({
     const newTask = await res.json();
 
     setTasks((prev) => [...prev, newTask]);
-    setNewTaskTitle("");
-    setSelectedPriority("medium");
-    setAddingTo(null);
+    resetAddTask();
   }
 
   async function deleteTask(id: string) {
@@ -86,15 +129,15 @@ function KanbanBoard({
     const updatedFields =
       newColumn === "done"
         ? {
-          column: newColumn,
-          completed: true,
-          completedAt: now,
-        }
+            column: newColumn,
+            completed: true,
+            completedAt: now,
+          }
         : {
-          column: newColumn,
-          completed: false,
-          completedAt: null,
-        };
+            column: newColumn,
+            completed: false,
+            completedAt: null,
+          };
 
     const res = await fetch(`http://localhost:5000/tasks/${taskId}`, {
       method: "PUT",
@@ -113,9 +156,9 @@ function KanbanBoard({
       prev.map((t) =>
         t._id === taskId
           ? {
-            ...t,
-            ...updatedFields,
-          }
+              ...t,
+              ...updatedFields,
+            }
           : t
       )
     );
@@ -203,10 +246,14 @@ function KanbanBoard({
 
               <button
                 onClick={() => {
-                  setAddingTo(addingTo === col.id ? null : col.id);
-                  setNewTaskTitle("");
-                  setSelectedPriority("medium");
-                  setEditingTaskId(null);
+                  if (addingTo === col.id) {
+                    resetAddTask();
+                  } else {
+                    setAddingTo(col.id);
+                    setNewTaskTitle("");
+                    setSelectedPriority("medium");
+                    setEditingTaskId(null);
+                  }
                 }}
                 className="rounded p-1 text-muted-foreground transition-colors hover:text-foreground"
                 type="button"
@@ -216,15 +263,16 @@ function KanbanBoard({
             </div>
 
             {addingTo === col.id && (
-              <div className="mb-3 space-y-2">
+              <div
+                ref={addTaskContainerRef}
+                className="mb-3 space-y-2"
+                onKeyDown={(e) => handleAddTaskKeyDown(e, col.id)}
+              >
                 <input
+                  ref={addTaskInputRef}
                   value={newTaskTitle}
                   onChange={(e) => setNewTaskTitle(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") addTask(col.id);
-                  }}
                   placeholder="Task title..."
-                  autoFocus
                   className="w-full rounded-md border border-border bg-background/50 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                 />
 
@@ -235,11 +283,13 @@ function KanbanBoard({
                         key={priority}
                         type="button"
                         onClick={() => setSelectedPriority(priority)}
-                        className={`rounded px-2 py-1 text-[10px] font-mono capitalize transition-all ${priorityColors[priority]
-                          } ${selectedPriority === priority
+                        className={`rounded px-2 py-1 text-[10px] font-mono capitalize transition-all ${
+                          priorityColors[priority]
+                        } ${
+                          selectedPriority === priority
                             ? "scale-105 ring-1 ring-foreground"
                             : "opacity-80 hover:opacity-100"
-                          }`}
+                        }`}
                       >
                         {priority}
                       </button>
@@ -257,11 +307,11 @@ function KanbanBoard({
                     key={task._id}
                     draggable={editingTaskId !== task._id}
                     onDragStart={() => handleDragStart(task._id)}
-                    className={`group cursor-grab rounded-md border border-border/50 bg-card p-3 transition-all hover:border-primary/30 active:cursor-grabbing ${draggedTask === task._id ? "opacity-50" : ""
-                      }`}
+                    className={`group cursor-grab rounded-md border border-border/50 bg-card p-3 transition-all hover:border-primary/30 active:cursor-grabbing ${
+                      draggedTask === task._id ? "opacity-50" : ""
+                    }`}
                   >
                     <div className="flex items-start justify-between gap-2">
-
                       <div className="min-w-0 flex-1 overflow-hidden">
                         {editingTaskId === task._id ? (
                           <div className="space-y-2">
@@ -278,11 +328,13 @@ function KanbanBoard({
                                     key={priority}
                                     type="button"
                                     onClick={() => setEditPriority(priority)}
-                                    className={`rounded px-2 py-1 text-[10px] font-mono capitalize transition-all ${priorityColors[priority]
-                                      } ${editPriority === priority
+                                    className={`rounded px-2 py-1 text-[10px] font-mono capitalize transition-all ${
+                                      priorityColors[priority]
+                                    } ${
+                                      editPriority === priority
                                         ? "scale-105 ring-1 ring-foreground"
                                         : "opacity-80 hover:opacity-100"
-                                      }`}
+                                    }`}
                                   >
                                     {priority}
                                   </button>
@@ -293,18 +345,20 @@ function KanbanBoard({
                         ) : (
                           <>
                             <p
-                              className={`text-sm break-words whitespace-normal ${task.completed
+                              className={`text-sm break-words whitespace-normal ${
+                                task.completed
                                   ? "line-through text-muted-foreground"
                                   : "text-foreground"
-                                }`}
+                              }`}
                             >
                               {task.title}
                             </p>
 
                             <span
-                              className={`mt-1 inline-block rounded px-2 py-0.5 text-[10px] font-mono capitalize ${priorityColors[task.priority] ||
+                              className={`mt-1 inline-block rounded px-2 py-0.5 text-[10px] font-mono capitalize ${
+                                priorityColors[task.priority] ||
                                 "bg-muted text-muted-foreground"
-                                }`}
+                              }`}
                             >
                               {task.priority}
                             </span>

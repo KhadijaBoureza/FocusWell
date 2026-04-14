@@ -12,6 +12,8 @@ import NotesWidget from "../components/dashboard/NotesWidget";
 import RemindersWidget from "../components/dashboard/RemindersWidget";
 import ThoughtOrganizer from "../components/dashboard/ThoughtOrganizer";
 import WeeklyAnalytics from "../components/dashboard/WeeklyAnalytics";
+import AchievementBadges from "@/components/dashboard/AchievementBadges";
+import AchievementsPreview from "@/components/dashboard/AchievementsPreview";
 
 function Index() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -80,6 +82,9 @@ function Index() {
             refreshKey={analyticsRefreshKey}
           />
         );
+
+      case "achievements":
+        return <AchievementBadges />;
 
       default:
         return (
