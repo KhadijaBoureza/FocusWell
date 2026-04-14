@@ -274,12 +274,11 @@ app.get("/pomodoro", async (req, res) => {
     const sessions = await PomodoroSession.find().sort({ completedAt: -1 });
 
     const today = new Date();
-    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const startOfTomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    const todayKey = today.toISOString().split("T")[0];
 
     const todaySessions = sessions.filter((s) => {
-      const completed = new Date(s.completedAt);
-      return completed >= startOfToday && completed < startOfTomorrow;
+      const sessionDate = new Date(s.completedAt).toISOString().split("T")[0];
+      return sessionDate === todayKey;
     });
 
     const todayWorkSessions = todaySessions.filter((s) => s.mode === "work");
@@ -319,10 +318,10 @@ app.get("/pomodoro", async (req, res) => {
 
     res.json({
       sessions,
-      durations: { work: 25, shortBreak: 5, longBreak: 15 },
       todayMinutes,
       breaks,
       sessionLog,
+      durations: { work: 25, shortBreak: 5, longBreak: 15 },
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
