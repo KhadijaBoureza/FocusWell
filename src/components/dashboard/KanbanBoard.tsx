@@ -129,15 +129,15 @@ function KanbanBoard({
     const updatedFields =
       newColumn === "done"
         ? {
-            column: newColumn,
-            completed: true,
-            completedAt: now,
-          }
+          column: newColumn,
+          completed: true,
+          completedAt: now,
+        }
         : {
-            column: newColumn,
-            completed: false,
-            completedAt: null,
-          };
+          column: newColumn,
+          completed: false,
+          completedAt: null,
+        };
 
     const res = await fetch(`http://localhost:5000/tasks/${taskId}`, {
       method: "PUT",
@@ -156,9 +156,9 @@ function KanbanBoard({
       prev.map((t) =>
         t._id === taskId
           ? {
-              ...t,
-              ...updatedFields,
-            }
+            ...t,
+            ...updatedFields,
+          }
           : t
       )
     );
@@ -258,7 +258,7 @@ function KanbanBoard({
                 className="rounded p-1 text-muted-foreground transition-colors hover:text-foreground"
                 type="button"
               >
-                <Plus size={16} />
+                {addingTo === col.id ? <X size={16} /> : <Plus size={16} />}
               </button>
             </div>
 
@@ -283,13 +283,11 @@ function KanbanBoard({
                         key={priority}
                         type="button"
                         onClick={() => setSelectedPriority(priority)}
-                        className={`rounded px-2 py-1 text-[10px] font-mono capitalize transition-all ${
-                          priorityColors[priority]
-                        } ${
-                          selectedPriority === priority
+                        className={`rounded px-2 py-1 text-[10px] font-mono capitalize transition-all ${priorityColors[priority]
+                          } ${selectedPriority === priority
                             ? "scale-105 ring-1 ring-foreground"
                             : "opacity-80 hover:opacity-100"
-                        }`}
+                          }`}
                       >
                         {priority}
                       </button>
@@ -307,9 +305,8 @@ function KanbanBoard({
                     key={task._id}
                     draggable={editingTaskId !== task._id}
                     onDragStart={() => handleDragStart(task._id)}
-                    className={`group cursor-grab rounded-md border border-border/50 bg-card p-3 transition-all hover:border-primary/30 active:cursor-grabbing ${
-                      draggedTask === task._id ? "opacity-50" : ""
-                    }`}
+                    className={`group cursor-grab rounded-md border border-border/50 bg-card p-3 transition-all hover:border-primary/30 active:cursor-grabbing ${draggedTask === task._id ? "opacity-50" : ""
+                      }`}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1 overflow-hidden">
@@ -328,13 +325,11 @@ function KanbanBoard({
                                     key={priority}
                                     type="button"
                                     onClick={() => setEditPriority(priority)}
-                                    className={`rounded px-2 py-1 text-[10px] font-mono capitalize transition-all ${
-                                      priorityColors[priority]
-                                    } ${
-                                      editPriority === priority
+                                    className={`rounded px-2 py-1 text-[10px] font-mono capitalize transition-all ${priorityColors[priority]
+                                      } ${editPriority === priority
                                         ? "scale-105 ring-1 ring-foreground"
                                         : "opacity-80 hover:opacity-100"
-                                    }`}
+                                      }`}
                                   >
                                     {priority}
                                   </button>
@@ -345,20 +340,18 @@ function KanbanBoard({
                         ) : (
                           <>
                             <p
-                              className={`text-sm break-words whitespace-normal ${
-                                task.completed
+                              className={`text-sm break-words whitespace-normal ${task.completed
                                   ? "line-through text-muted-foreground"
                                   : "text-foreground"
-                              }`}
+                                }`}
                             >
                               {task.title}
                             </p>
 
                             <span
-                              className={`mt-1 inline-block rounded px-2 py-0.5 text-[10px] font-mono capitalize ${
-                                priorityColors[task.priority] ||
+                              className={`mt-1 inline-block rounded px-2 py-0.5 text-[10px] font-mono capitalize ${priorityColors[task.priority] ||
                                 "bg-muted text-muted-foreground"
-                              }`}
+                                }`}
                             >
                               {task.priority}
                             </span>

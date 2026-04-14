@@ -118,11 +118,10 @@ function ThoughtOrganizer() {
       <div className="flex gap-1 mb-4 flex-wrap">
         <button
           onClick={() => setFilter("all")}
-          className={`px-2.5 py-1 rounded-md text-xs ${
-            filter === "all"
+          className={`px-2.5 py-1 rounded-md text-xs ${filter === "all"
               ? "bg-primary/10 text-primary"
               : "text-muted-foreground hover:text-foreground"
-          }`}
+            }`}
         >
           All
         </button>
@@ -134,11 +133,10 @@ function ThoughtOrganizer() {
               <button
                 key={cat}
                 onClick={() => setFilter(cat)}
-                className={`px-2.5 py-1 rounded-md text-xs flex items-center gap-1 ${
-                  filter === cat
+                className={`px-2.5 py-1 rounded-md text-xs flex items-center gap-1 ${filter === cat
                     ? `${cfg.bg} ${cfg.color}`
                     : "text-muted-foreground hover:text-foreground"
-                }`}
+                  }`}
               >
                 <cfg.icon size={12} />
                 {cfg.label}
@@ -156,7 +154,7 @@ function ThoughtOrganizer() {
             onChange={(e) => setContent(e.target.value)}
             placeholder="What's on your mind?"
             rows={3}
-            className="w-full border border-border rounded-md px-3 py-2 text-sm"
+            className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
           />
 
           <div className="flex justify-between">
@@ -168,11 +166,10 @@ function ThoughtOrganizer() {
                     <button
                       key={cat}
                       onClick={() => setCategory(cat)}
-                      className={`p-1.5 rounded-md ${
-                        category === cat
+                      className={`p-1.5 rounded-md ${category === cat
                           ? `${cfg.bg} ${cfg.color}`
                           : "text-muted-foreground"
-                      }`}
+                        }`}
                     >
                       <cfg.icon size={14} />
                     </button>
@@ -192,7 +189,7 @@ function ThoughtOrganizer() {
       )}
 
       {/* Thoughts */}
-      <div className="space-y-2.5 max-h-[350px] overflow-y-auto">
+      <div className="space-y-2.5 max-h-[350px] overflow-y-auto scrollbar-thin pr-2">
         {filtered.map((thought) => {
           const cfg = categoryConfig[thought.category];
 
