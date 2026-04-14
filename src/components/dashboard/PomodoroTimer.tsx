@@ -38,7 +38,7 @@ const PomodoroTimer = () => {
   const [sessions, setSessions] = useLocalStorage("focuswell-pomodoro-sessions", 0);
   const [todayMinutes, setTodayMinutes] = useLocalStorage("focuswell-today-minutes", 0);
   const [sessionLog, setSessionLog] = useLocalStorage<SessionLog[]>("focuswell-session-log", []);
-
+  const [breaks, setBreaks] = useLocalStorage("focuswell-pomodoro-breaks", 0);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -175,19 +175,29 @@ const PomodoroTimer = () => {
         if (existing) {
           return logs.map((l) =>
             l.date === today
-              ? { ...l, sessions: l.sessions + 1, totalMinutes: l.totalMinutes + focusMinutes }
+              ? {
+                ...l,
+                sessions: l.sessions + 1,
+                totalMinutes: l.totalMinutes + focusMinutes,
+              }
               : l
           );
         }
-        return [...logs, { date: today, sessions: 1, totalMinutes: focusMinutes }];
+        return [
+          ...logs,
+          { date: today, sessions: 1, totalMinutes: focusMinutes },
+        ];
       });
+
       api.saveSession({
         mode: "work",
         duration: durations.work,
         completedAt: new Date().toISOString(),
       });
+    } else {
+      setBreaks((b) => b + 1);
     }
-  }, [timeLeft, isRunning]);
+  }, [timeLeft, isRunning, mode, durations.work, setSessions, setTodayMinutes, setSessionLog, setBreaks]);
 
   const switchMode = (newMode: Mode) => {
     setMode(newMode);
@@ -353,6 +363,8 @@ const PomodoroTimer = () => {
           <Coffee size={14} />
           <span>{sessions} sessions</span>
         </div>
+        <span className="text-border">|</span>
+        <span>{breaks} breaks</span>
         <span className="text-border">|</span>
         <span>{todayMinutes} min today</span>
       </div>
