@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, } from "react";
 import {
   Play,
   Pause,
@@ -72,7 +72,7 @@ const PomodoroTimer = () => {
     setTimeLeft,
     setIsRunning,
   } = useTimer();
-  const [isFinished, setIsFinished] = useState(false);
+  const isFinished = timeLeft === 0 && !isRunning;
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [tempDurations, setTempDurations] = useState(durations);
 
@@ -164,15 +164,27 @@ const PomodoroTimer = () => {
 
     return () => {
       document.removeEventListener("click", unlockAudio);
+
+      audio.pause();
+      audio.currentTime = 0;
+
+      if (audioRef.current === audio) {
+        audioRef.current = null;
+      }
     };
   }, []);
 
-  const playSound = useCallback(() => {
-    if (audioRef.current) {
+  useEffect(() => {
+    if (!audioRef.current) return;
+
+    if (isFinished) {
       audioRef.current.currentTime = 0;
       audioRef.current.play().catch(() => { });
+    } else {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
     }
-  }, []);
+  }, [isFinished]);
 
   useEffect(() => {
     if (timeLeft !== 0 || isRunning) return;
@@ -222,19 +234,10 @@ const PomodoroTimer = () => {
     }
   }, [timeLeft, isRunning, mode, durations]);
 
-  useEffect(() => {
-  if (timeLeft === 0) {
-    setIsFinished(true);
-    playSound();
-  }
-}, [timeLeft]);
-
   const switchMode = (newMode: Mode) => {
-    setIsRunning(false); // stop current timer first
-
+    setIsRunning(false);
     setMode(newMode);
     setTimeLeft(durations[newMode] * 60);
-    setIsFinished(false);
 
     if (audioRef.current) {
       audioRef.current.pause();
@@ -243,15 +246,14 @@ const PomodoroTimer = () => {
   };
 
   const reset = () => {
-  setIsRunning(false);
-  setTimeLeft(durations[mode] * 60);
-  setIsFinished(false);
+    setIsRunning(false);
+    setTimeLeft(durations[mode] * 60);
 
-  if (audioRef.current) {
-    audioRef.current.pause();
-    audioRef.current.currentTime = 0;
-  }
-};
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+  };
 
   const skipToNext = () => {
     if (mode === "work") switchMode("shortBreak");
@@ -285,17 +287,16 @@ const PomodoroTimer = () => {
   };
 
   const saveDurations = () => {
-    setDurations(tempDurations);
-    setTimeLeft(tempDurations[mode] * 60);
-    setIsRunning(false);
-    setIsFinished(false);
-    setSettingsOpen(false);
+  setDurations(tempDurations);
+  setTimeLeft(tempDurations[mode] * 60);
+  setIsRunning(false);
+  setSettingsOpen(false);
 
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-  };
+  if (audioRef.current) {
+    audioRef.current.pause();
+    audioRef.current.currentTime = 0;
+  }
+};
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
