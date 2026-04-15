@@ -19,6 +19,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { api } from "@/lib/api";
+import { useTimer } from "@/context/TimerContext";
 
 const DEFAULT_DURATIONS = { work: 25, shortBreak: 5, longBreak: 15 };
 
@@ -63,9 +64,14 @@ const PomodoroTimer = () => {
     DEFAULT_DURATIONS
   );
 
-  const [mode, setMode] = useState<Mode>("work");
-  const [timeLeft, setTimeLeft] = useState(durations.work * 60);
-  const [isRunning, setIsRunning] = useState(false);
+  const {
+    mode,
+    timeLeft,
+    isRunning,
+    setMode,
+    setTimeLeft,
+    setIsRunning,
+  } = useTimer();
   const [isFinished, setIsFinished] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [tempDurations, setTempDurations] = useState(durations);
@@ -92,8 +98,12 @@ const PomodoroTimer = () => {
         if (!data) return;
 
         if (data.durations) {
-          setDurations(data.durations);
-          setTempDurations(data.durations);
+          const hasLocal = localStorage.getItem("focuswell-durations");
+
+          if (!hasLocal) {
+            setDurations(data.durations);
+            setTempDurations(data.durations);
+          }
         }
 
         if (Array.isArray(data.sessions)) {
@@ -120,9 +130,7 @@ const PomodoroTimer = () => {
           setSessionLog(data.sessionLog);
         }
 
-        if (data.durations?.[mode]) {
-          setTimeLeft(data.durations[mode] * 60);
-        }
+
 
         console.log("Loaded from backend ✅");
       } catch (err) {
@@ -131,7 +139,7 @@ const PomodoroTimer = () => {
     };
 
     loadFromBackend();
-  }, [mode, setDurations]);
+  }, []);
 
   useEffect(() => {
     const audio = new Audio("/notification.mp3");
@@ -165,34 +173,6 @@ const PomodoroTimer = () => {
       audioRef.current.play().catch(() => { });
     }
   }, []);
-
-  useEffect(() => {
-    if (!isRunning) return;
-
-    const startTime = Date.now();
-    const startValue = timeLeft;
-    let rafId: number;
-
-    const tick = () => {
-      const elapsed = Math.floor((Date.now() - startTime) / 1000);
-      const newTime = Math.max(0, startValue - elapsed);
-
-      setTimeLeft(newTime);
-
-      if (newTime === 0) {
-        setIsRunning(false);
-        setIsFinished(true);
-        playSound();
-        return;
-      }
-
-      rafId = requestAnimationFrame(tick);
-    };
-
-    rafId = requestAnimationFrame(tick);
-
-    return () => cancelAnimationFrame(rafId);
-  }, [isRunning, timeLeft, playSound]);
 
   useEffect(() => {
     if (timeLeft !== 0 || isRunning) return;
@@ -242,10 +222,18 @@ const PomodoroTimer = () => {
     }
   }, [timeLeft, isRunning, mode, durations]);
 
+  useEffect(() => {
+  if (timeLeft === 0) {
+    setIsFinished(true);
+    playSound();
+  }
+}, [timeLeft]);
+
   const switchMode = (newMode: Mode) => {
+    setIsRunning(false); // stop current timer first
+
     setMode(newMode);
     setTimeLeft(durations[newMode] * 60);
-    setIsRunning(false);
     setIsFinished(false);
 
     if (audioRef.current) {
@@ -255,15 +243,15 @@ const PomodoroTimer = () => {
   };
 
   const reset = () => {
-    setTimeLeft(durations[mode] * 60);
-    setIsRunning(false);
-    setIsFinished(false);
+  setIsRunning(false);
+  setTimeLeft(durations[mode] * 60);
+  setIsFinished(false);
 
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-  };
+  if (audioRef.current) {
+    audioRef.current.pause();
+    audioRef.current.currentTime = 0;
+  }
+};
 
   const skipToNext = () => {
     if (mode === "work") switchMode("shortBreak");
