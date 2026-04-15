@@ -17,7 +17,7 @@ const MONTHS = ["January", "February", "March", "April", "May", "June", "July", 
 type EventType = "meeting" | "interview" | "schedule" | "event";
 
 interface CalendarEvent {
-  _id: string; // ✅ FIXED (was id)
+  id: string;
   title: string;
   date: string;
   time: string;
@@ -40,20 +40,28 @@ const EVENT_LABELS: Record<EventType, string> = {
 
 const CalendarWidget = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
-
   // const [events, setEvents] = useLocalStorage<CalendarEvent[]>("focuswell-events", []);
-  const [events, setEvents] = useState<CalendarEvent[]>([]); // ✅ NEW
-
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showDayEvents, setShowDayEvents] = useState(false);
-  const [newEvent, setNewEvent] = useState({ title: "", time: "09:00", type: "meeting" as EventType });
+  const [newEvent, setNewEvent] = useState({
+    title: "",
+    time: "09:00",
+    type: "meeting" as EventType,
+  });
 
-  // ✅ FETCH EVENTS FROM BACKEND
   useEffect(() => {
     fetch("http://localhost:5000/events")
       .then((res) => res.json())
-      .then((data) => setEvents(data))
+      .then((data) =>
+        setEvents(
+          data.map((e: any) => ({
+            ...e,
+            id: e.id || e._id,
+          }))
+        )
+      )
       .catch((err) => console.error(err));
   }, []);
 
@@ -67,7 +75,9 @@ const CalendarWidget = () => {
   const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
 
   const isToday = (day: number) =>
-    day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+    day === today.getDate() &&
+    month === today.getMonth() &&
+    year === today.getFullYear();
 
   const dateKey = (day: number) =>
     `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -78,14 +88,16 @@ const CalendarWidget = () => {
   const handleDayClick = (day: number) => {
     setSelectedDate(dateKey(day));
     const dayEvents = getEventsForDay(day);
+
     if (dayEvents.length > 0) {
+      setShowAddDialog(false);
       setShowDayEvents(true);
     } else {
+      setShowDayEvents(false);
       setShowAddDialog(true);
     }
   };
 
-  // ✅ ADD EVENT → BACKEND
   async function handleAddEvent() {
     if (!newEvent.title.trim() || !selectedDate) return;
 
@@ -102,26 +114,24 @@ const CalendarWidget = () => {
       }),
     });
 
-    const savedEvent = await res.json();
+    const savedEventRaw = await res.json();
+
+    const savedEvent = {
+      ...savedEventRaw,
+      id: savedEventRaw.id || savedEventRaw._id,
+    };
 
     setEvents((prev) => [...prev, savedEvent]);
-
     setNewEvent({ title: "", time: "08:00", type: "meeting" });
     setShowAddDialog(false);
   }
 
-  // ❌ OLD
-  // const handleDeleteEvent = (id: string) => {
-  //   setEvents(events.filter((e) => e.id !== id));
-  // };
-
-  // ✅ NEW DELETE
   async function handleDeleteEvent(id: string) {
     await fetch(`http://localhost:5000/events/${id}`, {
       method: "DELETE",
     });
 
-    setEvents((prev) => prev.filter((e) => e._id !== id));
+    setEvents((prev) => prev.filter((e) => e.id !== id));
   }
 
   const days: (number | null)[] = [];
@@ -134,10 +144,10 @@ const CalendarWidget = () => {
 
   const selectedDateFormatted = selectedDate
     ? new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", {
-        weekday: "long",
-        month: "long",
-        day: "numeric",
-      })
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+    })
     : "";
 
   return (
@@ -151,23 +161,32 @@ const CalendarWidget = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => {
-                setSelectedDate(dateKey(today.getDate()));
+                const todayKey = dateKey(today.getDate());
+                setSelectedDate(todayKey);
+                setShowDayEvents(false);
                 setShowAddDialog(true);
               }}
               className="p-1.5 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+              title="Add event"
             >
               <Plus size={16} />
             </button>
 
-            <button onClick={prevMonth}>
+            <button
+              onClick={prevMonth}
+              className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+            >
               <ChevronLeft size={18} />
             </button>
 
-            <span className="font-mono text-sm min-w-[140px] text-center">
+            <span className="font-mono text-sm text-foreground min-w-[140px] text-center">
               {MONTHS[month]} {year}
             </span>
 
-            <button onClick={nextMonth}>
+            <button
+              onClick={nextMonth}
+              className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+            >
               <ChevronRight size={18} />
             </button>
           </div>
@@ -175,7 +194,7 @@ const CalendarWidget = () => {
 
         <div className="grid grid-cols-7 gap-1">
           {DAYS.map((day) => (
-            <div key={day} className="text-center text-[10px] py-1">
+            <div key={day} className="text-center text-[10px] font-mono text-muted-foreground py-1">
               {day}
             </div>
           ))}
@@ -188,14 +207,12 @@ const CalendarWidget = () => {
                 {day && (
                   <button
                     onClick={() => handleDayClick(day)}
-                    className={`w-7 h-7 rounded-full text-xs ${
-                      isToday(day)
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-muted"
-                    }`}
+                    className={`w-6 h-6 rounded-full text-[12px] font-mono transition-all relative ${isToday(day)
+                        ? "bg-primary text-primary-foreground neon-glow-violet"
+                        : "text-foreground hover:bg-muted"
+                      }`}
                   >
                     {day}
-
                     {dayEvents.length > 0 && (
                       <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 flex gap-0.5">
                         {dayEvents.slice(0, 3).map((e, idx) => (
@@ -214,22 +231,136 @@ const CalendarWidget = () => {
         </div>
       </div>
 
-      {/* Day Events Dialog */}
-      <Dialog open={showDayEvents} onOpenChange={setShowDayEvents}>
-        <DialogContent>
+      {/* Add Event Dialog */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent className="glass-card border-border max-w-sm">
           <DialogHeader>
-            <DialogTitle>{selectedDateFormatted}</DialogTitle>
+            <DialogTitle className="font-mono text-foreground flex items-center gap-2">
+              <Plus size={18} className="text-primary" /> Add Event
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground text-sm">
+              {selectedDateFormatted}
+            </DialogDescription>
           </DialogHeader>
 
-          {selectedDateEvents.map((event) => (
-            <div key={event._id} className="flex justify-between">
-              <span>{event.title}</span>
-
-              <button onClick={() => handleDeleteEvent(event._id)}>
-                <X size={14} />
-              </button>
+          <div className="space-y-4 mt-2">
+            <div>
+              <label className="text-xs font-mono text-muted-foreground mb-1 block">
+                Title
+              </label>
+              <Input
+                value={newEvent.title}
+                onChange={(e) =>
+                  setNewEvent({ ...newEvent, title: e.target.value })
+                }
+                placeholder="e.g. Team standup"
+                className="bg-background/50 border-border font-mono text-sm"
+                onKeyDown={(e) => e.key === "Enter" && handleAddEvent()}
+              />
             </div>
-          ))}
+
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <label className="text-xs font-mono text-muted-foreground mb-1 block">
+                  Time
+                </label>
+                <Input
+                  type="time"
+                  value={newEvent.time}
+                  onChange={(e) =>
+                    setNewEvent({ ...newEvent, time: e.target.value })
+                  }
+                  className="bg-background/50 border-border font-mono text-sm"
+                />
+              </div>
+
+              <div className="flex-1">
+                <label className="text-xs font-mono text-muted-foreground mb-1 block">
+                  Type
+                </label>
+                <select
+                  value={newEvent.type}
+                  onChange={(e) =>
+                    setNewEvent({
+                      ...newEvent,
+                      type: e.target.value as EventType,
+                    })
+                  }
+                  className="w-full h-10 rounded-md border border-border bg-background/50 px-3 text-sm font-mono text-foreground"
+                >
+                  {Object.entries(EVENT_LABELS).map(([key, label]) => (
+                    <option key={key} value={key}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <Button
+              onClick={handleAddEvent}
+              className="w-full font-mono"
+              disabled={!newEvent.title.trim()}
+            >
+              <Plus size={16} /> Add Event
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Day Events Dialog */}
+      <Dialog open={showDayEvents} onOpenChange={setShowDayEvents}>
+        <DialogContent className="glass-card border-border max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-mono text-foreground flex items-center gap-2">
+              <Calendar size={18} className="text-primary" /> {selectedDateFormatted}
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground text-sm">
+              {selectedDateEvents.length} event{selectedDateEvents.length !== 1 ? "s" : ""}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2 mt-2">
+            {selectedDateEvents.map((event) => (
+              <div
+                key={event.id}
+                className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 border border-border/50 group"
+              >
+                <span className={`w-2 h-2 rounded-full shrink-0 ${EVENT_COLORS[event.type]}`} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-mono text-foreground truncate">
+                    {event.title}
+                  </p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Clock size={10} /> {event.time}
+                    </span>
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Tag size={10} /> {EVENT_LABELS[event.type]}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => handleDeleteEvent(event.id)}
+                  className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-all"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
+
+            <Button
+              variant="outline"
+              className="w-full font-mono mt-2"
+              onClick={() => {
+                setShowDayEvents(false);
+                setShowAddDialog(true);
+              }}
+            >
+              <Plus size={16} />
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </>
