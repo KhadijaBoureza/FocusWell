@@ -40,6 +40,21 @@ function calculateDailyTrend(data: WeeklyDataItem[]) {
   return Math.round(((todayTasks - yesterdayTasks) / yesterdayTasks) * 100);
 }
 
+function formatFocus(minutes: number) {
+  const safeMinutes = Math.max(0, Math.round(minutes));
+
+  if (safeMinutes <= 0) return "0m";
+
+  if (safeMinutes < 60) {
+    return safeMinutes + "m"; // 👈 force string
+  }
+
+  const hours = Math.floor(safeMinutes / 60);
+  const mins = safeMinutes % 60;
+
+  return mins === 0 ? hours + "h" : `${hours}h ${mins}m`;
+}
+
 function WeeklyAnalytics({ tasks, refreshKey }: WeeklyAnalyticsProps) {
   const [weeklyData, setWeeklyData] = useState<WeeklyDataItem[]>([]);
 
@@ -70,7 +85,7 @@ function WeeklyAnalytics({ tasks, refreshKey }: WeeklyAnalyticsProps) {
           const found = last7Days.find((d) => d.date === date);
 
           if (found) {
-            found.focus += s.duration / 60;
+            found.focus += s.duration < 1 ? s.duration * 60 : s.duration;
           }
         });
 
@@ -108,9 +123,8 @@ function WeeklyAnalytics({ tasks, refreshKey }: WeeklyAnalyticsProps) {
         </div>
 
         <div
-          className={`flex items-center gap-1 text-xs ${
-            taskTrend >= 0 ? "text-green-500" : "text-red-500"
-          }`}
+          className={`flex items-center gap-1 text-xs ${taskTrend >= 0 ? "text-green-500" : "text-red-500"
+            }`}
         >
           <TrendingUp size={14} />
           {taskTrend >= 0 ? "+" : ""}
@@ -120,7 +134,7 @@ function WeeklyAnalytics({ tasks, refreshKey }: WeeklyAnalyticsProps) {
 
       <div className="mb-5 grid grid-cols-3 gap-3">
         <div className="rounded-lg bg-muted/40 p-3 text-center">
-          <p className="text-xl font-bold">{totalFocus.toFixed(2)}h</p>
+          <p className="text-xl font-bold">{String(formatFocus(totalFocus))}</p>
           <p className="text-xs uppercase text-muted-foreground">Focus Time</p>
         </div>
 
@@ -130,7 +144,9 @@ function WeeklyAnalytics({ tasks, refreshKey }: WeeklyAnalyticsProps) {
         </div>
 
         <div className="rounded-lg bg-muted/40 p-3 text-center">
-          <p className="text-xl font-bold">{avgFocus}h</p>
+          <p className="text-xl font-bold">
+            {String(formatFocus(Math.ceil(totalFocus / 7)))}
+          </p>
           <p className="text-xs uppercase text-muted-foreground">Daily Avg</p>
         </div>
       </div>
@@ -160,8 +176,8 @@ function WeeklyAnalytics({ tasks, refreshKey }: WeeklyAnalyticsProps) {
 
             <Tooltip
               formatter={(value: number, name: string) => {
-                if (name === "Focus (hrs)") {
-                  return [`${Number(value).toFixed(2)}h`, name];
+                if (name === "Focus") {
+                  return [formatFocus(value), name];
                 }
                 return [value, name];
               }}
@@ -169,7 +185,7 @@ function WeeklyAnalytics({ tasks, refreshKey }: WeeklyAnalyticsProps) {
 
             <Bar
               dataKey="focus"
-              name="Focus (hrs)"
+              name="Focus"
               fill="hsl(var(--primary))"
               radius={[4, 4, 0, 0]}
             />
