@@ -175,6 +175,22 @@ function WeeklyAnalytics({ tasks, refreshKey }: WeeklyAnalyticsProps) {
             />
 
             <Tooltip
+              contentStyle={{
+                backgroundColor: "hsl(var(--background) / 0.85)",
+                border: "1px solid hsl(var(--primary) / 0.3)",
+                boxShadow: "0 0 12px hsl(var(--primary) / 0.2)",
+                borderRadius: "12px",
+                backdropFilter: "blur(10px)",
+              }}
+              labelStyle={{
+                color: "hsl(var(--foreground))",
+                fontSize: "12px",
+              }}
+              itemStyle={{
+                color: "hsl(var(--foreground))",
+                fontSize: "12px",
+              }}
+              cursor={{ fill: "hsl(var(--muted) / 0.2)" }}
               formatter={(value: number, name: string) => {
                 if (name === "Focus") {
                   return [formatFocus(value), name];
