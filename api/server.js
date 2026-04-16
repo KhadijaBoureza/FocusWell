@@ -9,6 +9,7 @@ const Thought = require("./models/Thought");
 const Reminder = require("./models/Reminder");
 const PomodoroSession = require("./models/PomodoroSession");
 const Event = require("./models/Event");
+const PomodoroSettings = require("./models/PomodoroSettings");
 
 const app = express();
 
@@ -312,6 +313,15 @@ app.post("/pomodoro/session", async (req, res) => {
 app.get("/pomodoro", async (req, res) => {
   try {
     const sessions = await PomodoroSession.find().sort({ completedAt: -1 });
+    let settings = await PomodoroSettings.findOne();
+
+    if (!settings) {
+      settings = await PomodoroSettings.create({
+        work: 25,
+        shortBreak: 5,
+        longBreak: 15,
+      });
+    }
 
     const today = new Date();
     const todayKey = today.toISOString().split("T")[0];
@@ -361,8 +371,52 @@ app.get("/pomodoro", async (req, res) => {
       todayMinutes,
       breaks,
       sessionLog,
-      durations: { work: 25, shortBreak: 5, longBreak: 15 },
+      durations: {
+        work: settings.work,
+        shortBreak: settings.shortBreak,
+        longBreak: settings.longBreak,
+      },
     });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET pomodoro settings
+app.get("/pomodoro/settings", async (req, res) => {
+  try {
+    let settings = await PomodoroSettings.findOne();
+
+    if (!settings) {
+      settings = await PomodoroSettings.create({
+        work: 25,
+        shortBreak: 5,
+        longBreak: 15,
+      });
+    }
+
+    res.json(settings);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// UPDATE pomodoro settings
+app.put("/pomodoro/settings", async (req, res) => {
+  try {
+    let settings = await PomodoroSettings.findOne();
+
+    if (!settings) {
+      settings = new PomodoroSettings();
+    }
+
+    settings.work = req.body.work ?? settings.work;
+    settings.shortBreak = req.body.shortBreak ?? settings.shortBreak;
+    settings.longBreak = req.body.longBreak ?? settings.longBreak;
+
+    await settings.save();
+
+    res.json(settings);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
