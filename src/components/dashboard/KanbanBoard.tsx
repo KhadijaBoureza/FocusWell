@@ -223,12 +223,12 @@ function KanbanBoard({
   }
 
   return (
-    <div className="glass-card neon-border-blue p-6">
+    <div className="glass-card neon-border-blue p-6 h-[470px] flex flex-col overflow-hidden">
       <h2 className="mb-4 font-mono text-lg font-semibold text-foreground">
         Task Board
       </h2>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 h-[470px]  md:grid-cols-3">
         {COLUMNS.map((col) => (
           <div
             key={col.id}
