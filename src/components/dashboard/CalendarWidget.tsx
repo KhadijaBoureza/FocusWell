@@ -52,18 +52,48 @@ const CalendarWidget = () => {
   });
 
   useEffect(() => {
-    fetch("http://localhost:5000/events")
-      .then((res) => res.json())
-      .then((data) =>
-        setEvents(
-          data.map((e: any) => ({
-            ...e,
-            id: e.id || e._id,
-          }))
-        )
-      )
-      .catch((err) => console.error(err));
-  }, []);
+  fetchEvents();
+
+  function handleCalendarEventAdded(e: Event) {
+    const custom = e as CustomEvent;
+    const eventItem = custom.detail;
+
+    if (!eventItem) return;
+
+    setEvents((prev) => {
+      const exists = prev.some(
+        (item) =>
+          item.title === eventItem.title &&
+          item.date === eventItem.date &&
+          item.time === eventItem.time
+      );
+
+      if (exists) return prev;
+
+      return [
+        {
+          ...eventItem,
+          id: eventItem.id || eventItem._id,
+        },
+        ...prev,
+      ];
+    });
+  }
+
+  window.addEventListener("calendar:event-added", handleCalendarEventAdded);
+  window.addEventListener("reminders:changed", fetchEvents);
+
+  return () => {
+    window.removeEventListener("calendar:event-added", handleCalendarEventAdded);
+    window.removeEventListener("reminders:changed", fetchEvents);
+  };
+}, []);
+const EVENT_COLORS: Record<EventType, string> = {
+  meeting: "bg-primary/80",
+  interview: "bg-accent",
+  schedule: "bg-primary",
+  event: "bg-muted-foreground",
+};
 
   const today = new Date();
   const year = currentDate.getFullYear();
@@ -97,7 +127,21 @@ const CalendarWidget = () => {
       setShowAddDialog(true);
     }
   };
-
+  
+  async function fetchEvents() {
+  try {
+    const res = await fetch("http://localhost:5000/events");
+    const data = await res.json();
+    setEvents(
+      data.map((e: any) => ({
+        ...e,
+        id: e.id || e._id,
+      }))
+    );
+  } catch (err) {
+    console.error(err);
+  }
+}
   async function handleAddEvent() {
     if (!newEvent.title.trim() || !selectedDate) return;
 
