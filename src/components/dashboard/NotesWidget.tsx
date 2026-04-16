@@ -153,7 +153,7 @@ function NotesWidget() {
   }
 
   return (
-    <div className="glass-card neon-border-blue p-6">
+    <div className="glass-card neon-border-blue p-6 h-[393px] flex flex-col overflow-hidden">
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">Notes</h2>
@@ -220,7 +220,7 @@ function NotesWidget() {
       )}
 
       {/* Notes list */}
-      <div  className="space-y-3 max-h-[300px] overflow-y-auto scrollbar-thin">
+      <div className="space-y-3 max-h-[300px] overflow-y-auto scrollbar-thin flex-1">
         {notes.map((note) => (
           <div
             key={note._id}
