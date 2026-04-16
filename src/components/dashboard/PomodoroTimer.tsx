@@ -10,7 +10,6 @@ import {
   Plus,
   Minus,
 } from "lucide-react";
-// import { useLocalStorage } from "@/hooks/useLocalStorage";
 import {
   Dialog,
   DialogContent,
@@ -65,6 +64,7 @@ const PomodoroTimer = () => {
     mode,
     activeMode,
     timeLeft,
+    duration,
     isRunning,
     isAlarmPlaying,
     setMode,
@@ -78,13 +78,6 @@ const PomodoroTimer = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [tempDurations, setTempDurations] = useState(durations);
 
-  // OLD localStorage stats
-  // const [sessions, setSessions] = useLocalStorage("focuswell-pomodoro-sessions", 0);
-  // const [todayMinutes, setTodayMinutes] = useLocalStorage("focuswell-today-minutes", 0);
-  // const [sessionLog, setSessionLog] = useLocalStorage<SessionLog[]>("focuswell-session-log", []);
-  // const [breaks, setBreaks] = useLocalStorage("focuswell-pomodoro-breaks", 0);
-
-  // ✅ NEW backend-driven stats
   const [sessions, setSessions] = useState(0);
   const [todayMinutes, setTodayMinutes] = useState(0);
   const [sessionLog, setSessionLog] = useState<SessionLog[]>([]);
@@ -94,11 +87,25 @@ const PomodoroTimer = () => {
     const loadFromBackend = async () => {
       try {
         const data = await api.getPomodoro();
-
         if (!data) return;
 
-        setDurations(DEFAULT_DURATIONS);
-        setTempDurations(DEFAULT_DURATIONS);
+        const loadedDurations = {
+          work:
+            typeof data?.durations?.work === "number"
+              ? data.durations.work
+              : DEFAULT_DURATIONS.work,
+          shortBreak:
+            typeof data?.durations?.shortBreak === "number"
+              ? data.durations.shortBreak
+              : DEFAULT_DURATIONS.shortBreak,
+          longBreak:
+            typeof data?.durations?.longBreak === "number"
+              ? data.durations.longBreak
+              : DEFAULT_DURATIONS.longBreak,
+        };
+
+        setDurations(loadedDurations);
+        setTempDurations(loadedDurations);
 
         if (Array.isArray(data.sessions)) {
           const today = new Date().toISOString().split("T")[0];
@@ -248,11 +255,14 @@ const PomodoroTimer = () => {
     }
   };
 
-  const minutes = Math.floor(timeLeft / 60);
-  const seconds = timeLeft % 60;
+  const displayTime = Math.ceil(timeLeft);
+  const minutes = Math.floor(displayTime / 60);
+  const seconds = displayTime % 60;
+
   const totalSeconds = durations[mode] * 60;
-  const progress = 1 - timeLeft / totalSeconds;
+const progress = 1 - timeLeft / totalSeconds; 
   const circumference = 2 * Math.PI * 90;
+  const strokeDashoffset = circumference * (1 - progress);
 
   const finishedColor = {
     stroke: "hsl(var(--destructive))",
@@ -350,8 +360,8 @@ const PomodoroTimer = () => {
             key={m}
             onClick={() => switchMode(m)}
             className={`rounded-lg px-3 py-1.5 text-xs font-mono transition-all ${mode === m
-                ? "bg-primary/15 text-primary"
-                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+              ? "bg-primary/15 text-primary"
+              : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
               }`}
           >
             {MODE_LABELS[m]}
@@ -360,43 +370,50 @@ const PomodoroTimer = () => {
       </div>
 
       <div className="relative mb-6 h-52 w-52">
-        <svg className="h-full w-full -rotate-90" viewBox="0 0 200 200">
-          <circle
-            cx="100"
-            cy="100"
-            r="90"
-            stroke="hsl(var(--chart-track))"
-            strokeWidth="6"
-            fill="none"
-          />
-          <circle
-            cx="100"
-            cy="100"
-            r="90"
-            stroke={colors.stroke}
-            strokeWidth="6"
-            fill="none"
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={circumference * (1 - progress)}
-            className="transition-all duration-300"
-            style={{ filter: `drop-shadow(0 0 8px ${colors.filter})` }}
-          />
-        </svg>
+  <svg className="h-full w-full" viewBox="0 0 200 200">
+    
+    {/* Background track */}
+    <circle
+      cx="100"
+      cy="100"
+      r="90"
+      stroke="hsl(var(--chart-track))"
+      strokeWidth="6"
+      fill="none"
+    />
 
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span
-            className={`font-mono text-5xl font-bold ${colors.text} ${isFinished ? "animate-pulse" : ""
-              }`}
-          >
-            {String(minutes).padStart(2, "0")}:
-            {String(seconds).padStart(2, "0")}
-          </span>
-          <span className="mt-2 text-xs text-muted-foreground">
-            {MODE_LABELS[mode]}
-          </span>
-        </div>
-      </div>
+    {/* Single animated ring (THIS is the fix) */}
+    <circle
+      cx="100"
+      cy="100"
+      r="90"
+      stroke={colors.stroke}
+      strokeWidth="6"
+      fill="none"
+      strokeLinecap="round"
+      strokeDasharray={circumference}
+      strokeDashoffset={circumference * (1 - progress)}
+      transform="rotate(-90 100 100)"
+      style={{
+        filter: `drop-shadow(0 0 8px ${colors.filter})`,
+      }}
+    />
+  </svg>
+
+  <div className="absolute inset-0 flex flex-col items-center justify-center">
+    <span
+      className={`font-mono text-5xl font-bold ${colors.text} ${
+        isFinished ? "animate-pulse" : ""
+      }`}
+    >
+      {String(minutes).padStart(2, "0")}:
+      {String(seconds).padStart(2, "0")}
+    </span>
+    <span className="mt-2 text-xs text-muted-foreground">
+      {MODE_LABELS[mode]}
+    </span>
+  </div>
+</div>
 
       <div className="flex gap-3">
         <button

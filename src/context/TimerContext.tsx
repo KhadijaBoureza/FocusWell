@@ -6,6 +6,7 @@ interface TimerState {
   mode: Mode;
   activeMode: Mode | null;
   timeLeft: number;
+  duration: number;
   isRunning: boolean;
   isAlarmPlaying: boolean;
   setMode: (m: Mode) => void;
@@ -27,6 +28,12 @@ export const TimerProvider = ({ children }: { children: React.ReactNode }) => {
     longBreak: 15 * 60,
   });
 
+  const [durationByMode] = useState({
+    work: 25 * 60,
+    shortBreak: 5 * 60,
+    longBreak: 15 * 60,
+  });
+
   const [isRunning, setIsRunning] = useState(false);
   const [isAlarmPlaying, setIsAlarmPlaying] = useState(false);
 
@@ -35,6 +42,7 @@ export const TimerProvider = ({ children }: { children: React.ReactNode }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const timeLeft = timeLeftByMode[mode];
+  const duration = durationByMode[mode];
 
   const setTimeLeft = (value: number) => {
     setTimeLeftByMode((prev) => ({
@@ -85,7 +93,7 @@ export const TimerProvider = ({ children }: { children: React.ReactNode }) => {
     const tick = () => {
       if (!startRef.current) return;
 
-      const elapsed = Math.floor((Date.now() - startRef.current) / 1000);
+      const elapsed = (Date.now() - startRef.current) / 1000;
       const newTime = Math.max(0, baseTimeRef.current - elapsed);
 
       setTimeLeftByMode((prev) => ({
@@ -128,6 +136,7 @@ export const TimerProvider = ({ children }: { children: React.ReactNode }) => {
         mode,
         activeMode,
         timeLeft,
+        duration,
         isRunning,
         isAlarmPlaying,
         setMode,
