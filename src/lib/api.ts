@@ -25,7 +25,7 @@ export const api = {
     if (!res.ok) throw new Error("Failed to fetch tasks");
     return await res.json();
   },
-
+  
   async saveSettings(durations: any) {
     const res = await fetch(`${BASE}/pomodoro/settings`, {
       method: "PUT",
@@ -38,4 +38,10 @@ export const api = {
     if (!res.ok) throw new Error("Failed to save settings");
     return await res.json();
   },
+  async getPomodoroSettings() {
+  const res = await fetch(`${BASE}/pomodoro/settings`);
+  if (!res.ok) throw new Error("Failed to fetch pomodoro settings");
+  return await res.json();
+},
+
 };
