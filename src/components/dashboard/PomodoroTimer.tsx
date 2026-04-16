@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, } from "react";
+import { useState, useEffect } from "react";
 import {
   Play,
   Pause,
@@ -10,7 +10,7 @@ import {
   Plus,
   Minus,
 } from "lucide-react";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
+// import { useLocalStorage } from "@/hooks/useLocalStorage";
 import {
   Dialog,
   DialogContent,
@@ -59,20 +59,22 @@ interface SessionLog {
 }
 
 const PomodoroTimer = () => {
-  const [durations, setDurations] = useLocalStorage(
-    "focuswell-durations",
-    DEFAULT_DURATIONS
-  );
+  const [durations, setDurations] = useState(DEFAULT_DURATIONS);
 
   const {
     mode,
+    activeMode,
     timeLeft,
     isRunning,
+    isAlarmPlaying,
     setMode,
     setTimeLeft,
     setIsRunning,
+    setActiveMode,
+    dismissAlarm,
   } = useTimer();
-  const isFinished = timeLeft === 0 && !isRunning;
+
+  const isFinished = isAlarmPlaying && activeMode === mode;
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [tempDurations, setTempDurations] = useState(durations);
 
@@ -88,8 +90,6 @@ const PomodoroTimer = () => {
   const [sessionLog, setSessionLog] = useState<SessionLog[]>([]);
   const [breaks, setBreaks] = useState(0);
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
   useEffect(() => {
     const loadFromBackend = async () => {
       try {
@@ -97,14 +97,8 @@ const PomodoroTimer = () => {
 
         if (!data) return;
 
-        if (data.durations) {
-          const hasLocal = localStorage.getItem("focuswell-durations");
-
-          if (!hasLocal) {
-            setDurations(data.durations);
-            setTempDurations(data.durations);
-          }
-        }
+        setDurations(DEFAULT_DURATIONS);
+        setTempDurations(DEFAULT_DURATIONS);
 
         if (Array.isArray(data.sessions)) {
           const today = new Date().toISOString().split("T")[0];
@@ -130,8 +124,6 @@ const PomodoroTimer = () => {
           setSessionLog(data.sessionLog);
         }
 
-
-
         console.log("Loaded from backend ✅");
       } catch (err) {
         console.log("Backend load failed", err);
@@ -142,55 +134,11 @@ const PomodoroTimer = () => {
   }, []);
 
   useEffect(() => {
-    const audio = new Audio("/notification.mp3");
-    audio.loop = true;
-    audio.preload = "auto";
-    audioRef.current = audio;
+    if (!isAlarmPlaying || !activeMode) return;
 
-    const unlockAudio = () => {
-      audio.muted = true;
-      audio
-        .play()
-        .then(() => {
-          audio.pause();
-          audio.currentTime = 0;
-          audio.muted = false;
-        })
-        .catch(() => { });
-      document.removeEventListener("click", unlockAudio);
-    };
-
-    document.addEventListener("click", unlockAudio);
-
-    return () => {
-      document.removeEventListener("click", unlockAudio);
-
-      audio.pause();
-      audio.currentTime = 0;
-
-      if (audioRef.current === audio) {
-        audioRef.current = null;
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!audioRef.current) return;
-
-    if (isFinished) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(() => { });
-    } else {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-  }, [isFinished]);
-
-  useEffect(() => {
-    if (timeLeft !== 0 || isRunning) return;
     const now = new Date().toISOString();
 
-    if (mode === "work") {
+    if (activeMode === "work") {
       const focusMinutes = durations.work;
 
       setSessions((s) => s + 1);
@@ -227,32 +175,26 @@ const PomodoroTimer = () => {
       setBreaks((b) => b + 1);
 
       api.saveSession({
-        mode,
-        duration: durations[mode],
+        mode: activeMode,
+        duration: durations[activeMode],
         completedAt: now,
       });
     }
-  }, [timeLeft, isRunning, mode, durations]);
+  }, [isAlarmPlaying, activeMode, durations]);
 
   const switchMode = (newMode: Mode) => {
-    setIsRunning(false);
     setMode(newMode);
-    setTimeLeft(durations[newMode] * 60);
-
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
   };
 
   const reset = () => {
-    setIsRunning(false);
-    setTimeLeft(durations[mode] * 60);
+    dismissAlarm();
 
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
+    if (activeMode === mode) {
+      setIsRunning(false);
+      setActiveMode(null);
     }
+
+    setTimeLeft(durations[mode] * 60);
   };
 
   const skipToNext = () => {
@@ -286,17 +228,25 @@ const PomodoroTimer = () => {
     });
   };
 
-  const saveDurations = () => {
-  setDurations(tempDurations);
-  setTimeLeft(tempDurations[mode] * 60);
-  setIsRunning(false);
-  setSettingsOpen(false);
+  const saveDurations = async () => {
+    try {
+      const saved = await api.saveSettings(tempDurations);
 
-  if (audioRef.current) {
-    audioRef.current.pause();
-    audioRef.current.currentTime = 0;
-  }
-};
+      const cleanDurations = {
+        work: saved.work,
+        shortBreak: saved.shortBreak,
+        longBreak: saved.longBreak,
+      };
+
+      setDurations(cleanDurations);
+      setTempDurations(cleanDurations);
+      setTimeLeft(cleanDurations[mode] * 60);
+      setIsRunning(false);
+      setSettingsOpen(false);
+    } catch (err) {
+      console.error("Failed to save settings", err);
+    }
+  };
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
@@ -310,7 +260,10 @@ const PomodoroTimer = () => {
     filter: "hsl(var(--destructive) / 0.5)",
   };
 
-  const colors = isFinished ? finishedColor : modeColors[mode];
+  const colors =
+    isAlarmPlaying && activeMode === mode
+      ? finishedColor
+      : modeColors[mode];
 
   return (
     <div className="glass-card neon-border-violet flex flex-col items-center p-6">
@@ -376,13 +329,10 @@ const PomodoroTimer = () => {
           Focus Timer
         </h2>
 
-        {isFinished ? (
+        {isAlarmPlaying ? (
           <button
             onClick={() => {
-              if (audioRef.current) {
-                audioRef.current.pause();
-                audioRef.current.currentTime = 0;
-              }
+              dismissAlarm();
               reset();
             }}
             className="animate-pulse rounded-lg p-1.5 text-destructive transition-all hover:bg-destructive/15"
@@ -400,8 +350,8 @@ const PomodoroTimer = () => {
             key={m}
             onClick={() => switchMode(m)}
             className={`rounded-lg px-3 py-1.5 text-xs font-mono transition-all ${mode === m
-              ? "bg-primary/15 text-primary"
-              : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                ? "bg-primary/15 text-primary"
+                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
               }`}
           >
             {MODE_LABELS[m]}
@@ -450,10 +400,21 @@ const PomodoroTimer = () => {
 
       <div className="flex gap-3">
         <button
-          onClick={() => setIsRunning(!isRunning)}
+          onClick={() => {
+            if (!isRunning) {
+              setActiveMode(mode);
+              setIsRunning(true);
+            } else {
+              setIsRunning(false);
+            }
+          }}
           className="rounded-full bg-primary/15 p-3.5 text-primary transition-all hover:bg-primary/25"
         >
-          {isRunning ? <Pause size={22} /> : <Play size={22} />}
+          {isRunning && activeMode === mode ? (
+            <Pause size={22} />
+          ) : (
+            <Play size={22} />
+          )}
         </button>
 
         <button
