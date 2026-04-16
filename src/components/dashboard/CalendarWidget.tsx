@@ -24,12 +24,6 @@ interface CalendarEvent {
   type: EventType;
 }
 
-const EVENT_COLORS: Record<EventType, string> = {
-  meeting: "bg-primary/80",
-  interview: "bg-accent",
-  schedule: "bg-secondary",
-  event: "bg-muted",
-};
 
 const EVENT_LABELS: Record<EventType, string> = {
   meeting: "Meeting",
