@@ -1,5 +1,6 @@
 require("./db");
 
+
 const express = require("express");
 const cors = require("cors");
 
@@ -10,7 +11,6 @@ const Reminder = require("./models/Reminder");
 const PomodoroSession = require("./models/PomodoroSession");
 const Event = require("./models/Event");
 const PomodoroSettings = require("./models/PomodoroSettings");
-
 const app = express();
 
 app.use(cors());
@@ -417,6 +417,49 @@ app.put("/pomodoro/settings", async (req, res) => {
     await settings.save();
 
     res.json(settings);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// ================= ACHIEVEMENTS =================
+
+
+const getAchievementStats = async () => {
+  const [sessions, tasks, notes, thoughts, reminders] = await Promise.all([
+    PomodoroSession.find(),
+    Task.find(),
+    Note.find(),
+    Thought.find(),
+    Reminder.find(),
+  ]);
+
+  const workSessions = sessions.filter((s) => s.mode === "work");
+  const breakSessions = sessions.filter(
+    (s) => s.mode === "shortBreak" || s.mode === "longBreak"
+  );
+
+  const totalMinutes = workSessions.reduce(
+    (sum, s) => sum + (Number(s.duration) || 0),
+    0
+  );
+
+  return {
+    sessions: workSessions.length,
+    minutes: totalMinutes,
+    breaks: breakSessions.length,
+    kanban: tasks,
+    notes,
+    thoughts,
+    reminders,
+  };
+};
+
+app.get("/achievements/stats", async (req, res) => {
+  try {
+    const stats = await getAchievementStats();
+    res.json(stats);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
