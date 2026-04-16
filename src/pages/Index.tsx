@@ -103,17 +103,16 @@ function Index() {
             </div>
 
             {/* New dashboard layout below */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-              {/* Top row */}
-              <div className="lg:col-span-4">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
+              <div className="lg:col-span-4 h-full">
                 <CalendarWidget />
               </div>
 
-              <div className="lg:col-span-4">
+              <div className="lg:col-span-4 h-full">
                 <NotesWidget />
               </div>
 
-              <div className="lg:col-span-4">
+              <div className="lg:col-span-4 h-full">
                 <RemindersWidget />
               </div>
 
