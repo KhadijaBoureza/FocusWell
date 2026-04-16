@@ -8,6 +8,12 @@ import {
   CalendarPlus,
   CalendarDays,
 } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 
 interface Reminder {
   _id: string;
@@ -36,7 +42,7 @@ function RemindersWidget() {
     new Date().toISOString().split("T")[0]
   );
 
-  const dateInputRef = useRef<HTMLInputElement | null>(null);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const timeInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -84,23 +90,6 @@ function RemindersWidget() {
     }
   }
 
-  function openDatePicker() {
-    if (dateInputRef.current?.showPicker) {
-      dateInputRef.current.showPicker();
-    } else {
-      dateInputRef.current?.focus();
-      dateInputRef.current?.click();
-    }
-  }
-
-  function openTimePicker() {
-    if (timeInputRef.current?.showPicker) {
-      timeInputRef.current.showPicker();
-    } else {
-      timeInputRef.current?.focus();
-      timeInputRef.current?.click();
-    }
-  }
 
   async function addReminder() {
     if (!title.trim()) return;
@@ -205,7 +194,8 @@ function RemindersWidget() {
   });
 
   return (
-    <div className="glass-card neon-border-violet p-6">
+
+    <div className="glass-card neon-border-blue p-6 h-[393px] flex flex-col overflow-hidden">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Bell size={18} className="text-primary" />
@@ -233,39 +223,49 @@ function RemindersWidget() {
           />
 
           <div className="flex gap-2 items-center flex-wrap">
-            <button
-              type="button"
-              onClick={openDatePicker}
-              className="relative flex items-center gap-1.5 bg-background/50 border border-border rounded-md px-3 py-2 text-xs font-mono text-foreground hover:bg-muted/50 transition-all"
-            >
-              <CalendarDays size={13} className="text-primary" />
-              {formatDisplayDate(selectedDate)}
-              <input
-                ref={dateInputRef}
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="absolute inset-0 opacity-0 pointer-events-none"
-                tabIndex={-1}
-              />
-            </button>
+            <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center gap-2 rounded-xl border border-primary/40 bg-background/60 px-3 py-2 text-xs font-mono text-foreground shadow-[0_0_12px_rgba(168,85,247,0.08)] transition-all hover:border-primary/70 hover:bg-muted/40"
+                >
+                  <CalendarDays size={13} className="text-primary" />
+                  {formatDisplayDate(selectedDate)}
+                </button>
+              </PopoverTrigger>
 
-            <button
-              type="button"
-              onClick={openTimePicker}
-              className="relative flex items-center gap-1.5 bg-background/50 border border-border rounded-md px-3 py-2 text-xs font-mono text-foreground hover:bg-muted/50 transition-all"
-            >
-              <Clock size={13} className="text-accent" />
-              {formatDisplayTime(time)}
+              <PopoverContent className="w-auto p-0" align="start" sideOffset={8}>
+                <Calendar
+                  mode="single"
+                  selected={new Date(selectedDate + "T00:00:00")}
+                  onSelect={(date) => {
+                    if (!date) return;
+
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, "0");
+                    const day = String(date.getDate()).padStart(2, "0");
+                    setSelectedDate(`${year}-${month}-${day}`);
+                    setDatePickerOpen(false);
+                  }}
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+
+            <div className="relative">
+              <div className="flex items-center gap-2 rounded-xl border border-cyan-400/50 bg-background/60 px-3 py-2 text-xs font-mono text-foreground shadow-[0_0_12px_rgba(34,211,238,0.10)] transition-all hover:border-cyan-400/80 hover:bg-muted/40">
+                <Clock size={13} className="text-cyan-400" />
+                {formatDisplayTime(time)}
+              </div>
+
               <input
                 ref={timeInputRef}
                 type="time"
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
-                className="absolute inset-0 opacity-0 pointer-events-none"
-                tabIndex={-1}
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
               />
-            </button>
+            </div>
 
             <button
               onClick={addReminder}
@@ -279,21 +279,19 @@ function RemindersWidget() {
         </div>
       )}
 
-      <div className="space-y-2 max-h-[250px] overflow-y-auto scrollbar-thin">
+      <div className="space-y-3 max-h-[300px] overflow-y-auto scrollbar-thin flex-1">
         {sortedReminders.map((reminder) => (
           <div
             key={reminder._id}
-            className={`flex items-start gap-3 p-2.5 rounded-md transition-all group ${
-              reminder.completed ? "opacity-50" : "hover:bg-muted/30"
-            }`}
+            className={`flex items-start gap-3 p-2.5 rounded-md transition-all group ${reminder.completed ? "opacity-50" : "hover:bg-muted/30"
+              }`}
           >
             <button
               onClick={() => toggleReminder(reminder)}
-              className={`shrink-0 w-5 h-5 mt-0.5 rounded-full border-2 flex items-center justify-center transition-all ${
-                reminder.completed
-                  ? "border-neon-green bg-neon-green/20"
-                  : "border-muted-foreground hover:border-primary"
-              }`}
+              className={`shrink-0 w-5 h-5 mt-0.5 rounded-full border-2 flex items-center justify-center transition-all ${reminder.completed
+                ? "border-neon-green bg-neon-green/20"
+                : "border-muted-foreground hover:border-primary"
+                }`}
             >
               {reminder.completed && (
                 <Check size={12} className="text-neon-green" />
@@ -302,11 +300,10 @@ function RemindersWidget() {
 
             <div className="flex-1 min-w-0">
               <p
-                className={`text-sm ${
-                  reminder.completed
-                    ? "line-through text-muted-foreground"
-                    : "text-foreground"
-                }`}
+                className={`text-sm ${reminder.completed
+                  ? "line-through text-muted-foreground"
+                  : "text-foreground"
+                  }`}
               >
                 {reminder.title}
               </p>
@@ -333,11 +330,10 @@ function RemindersWidget() {
                       ? "Already in calendar"
                       : "Add to calendar"
                   }
-                  className={`p-1 rounded transition-all ${
-                    isInCalendar(reminder)
-                      ? "text-primary opacity-60 cursor-default"
-                      : "text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-primary"
-                  }`}
+                  className={`p-1 rounded transition-all ${isInCalendar(reminder)
+                    ? "text-primary opacity-60 cursor-default"
+                    : "text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-primary"
+                    }`}
                   disabled={isInCalendar(reminder)}
                 >
                   <CalendarPlus size={14} />
