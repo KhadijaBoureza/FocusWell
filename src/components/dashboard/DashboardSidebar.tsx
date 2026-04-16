@@ -26,9 +26,8 @@ const DashboardSidebar = ({ activeTab, onTabChange }: SidebarProps) => {
 
   return (
     <aside
-      className={`hidden md:flex flex-col bg-sidebar border-r border-sidebar-border h-screen sticky top-0 transition-all duration-300 ${
-        collapsed ? "w-16" : "w-56"
-      }`}
+      className={`hidden md:flex flex-col bg-sidebar border-r border-sidebar-border h-screen sticky top-0 transition-all duration-300 ${collapsed ? "w-16" : "w-56"
+        }`}
     >
       {/* Logo */}
       <div className="p-4 flex items-center gap-2 border-b border-border">
@@ -46,11 +45,10 @@ const DashboardSidebar = ({ activeTab, onTabChange }: SidebarProps) => {
           <button
             key={item.id}
             onClick={() => onTabChange(item.id)}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
-              activeTab === item.id
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${activeTab === item.id
                 ? "bg-primary/15 text-primary font-medium"
                 : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-            }`}
+              }`}
           >
             <item.icon size={18} />
             {!collapsed && <span>{item.label}</span>}
@@ -58,13 +56,23 @@ const DashboardSidebar = ({ activeTab, onTabChange }: SidebarProps) => {
         ))}
       </nav>
 
-      {/* Collapse button */}
       <div className="p-2 border-t border-border">
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="w-full flex items-center justify-center p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+          className="w-full flex items-center justify-center p-2 rounded-lg 
+    text-primary bg-primary/10 
+    hover:bg-primary/20 hover:text-primary 
+    transition-all duration-300 
+    relative group"
         >
-          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          {/* subtle glow */}
+          <span className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-primary/10 blur-sm"></span>
+
+          {collapsed ? (
+            <ChevronRight size={16} className="relative z-10" />
+          ) : (
+            <ChevronLeft size={16} className="relative z-10" />
+          )}
         </button>
       </div>
     </aside>
