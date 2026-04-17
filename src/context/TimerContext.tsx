@@ -14,8 +14,6 @@ interface TimerState {
   setIsRunning: (r: boolean) => void;
   setActiveMode: (m: Mode | null) => void;
   dismissAlarm: () => void;
-  setDurations: (durations: { work: number; shortBreak: number; longBreak: number }) => void;
-  resetDurationsToDefault: () => void;
 }
 
 const TimerContext = createContext<TimerState | null>(null);
@@ -35,7 +33,6 @@ export const TimerProvider = ({ children }: { children: React.ReactNode }) => {
   shortBreak: 5 * 60,
   longBreak: 15 * 60,
 });
-
 
   const [isRunning, setIsRunning] = useState(false);
   const [isAlarmPlaying, setIsAlarmPlaying] = useState(false);
