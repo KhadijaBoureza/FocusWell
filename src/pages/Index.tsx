@@ -14,6 +14,7 @@ import ThoughtOrganizer from "../components/dashboard/ThoughtOrganizer";
 import WeeklyAnalytics from "../components/dashboard/WeeklyAnalytics";
 import AchievementBadges from "@/components/dashboard/AchievementBadges";
 import AchievementsPreview from "@/components/dashboard/AchievementsPreview";
+import WellbeingTracker from "@/components/dashboard/WellbeingTracker";
 
 function Index() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -75,6 +76,9 @@ function Index() {
       case "reminders":
         return <RemindersWidget />;
 
+      case "wellbeing":
+        return <WellbeingTracker onNavigate={setActiveTab} />;
+
       case "analytics":
         return (
           <WeeklyAnalytics
@@ -91,7 +95,6 @@ function Index() {
           <div className="space-y-6">
             <StatsBar tasks={tasks} />
 
-            {/* Keep tasks + timer exactly as before */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
               <div className="lg:col-span-2">
                 <KanbanBoard tasks={tasks} setTasks={setTasks} />
@@ -102,7 +105,6 @@ function Index() {
               </div>
             </div>
 
-            {/* New dashboard layout below */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
               <div className="lg:col-span-4 h-full">
                 <CalendarWidget />
@@ -116,7 +118,6 @@ function Index() {
                 <RemindersWidget />
               </div>
 
-              {/* Bottom row */}
               <div className="lg:col-span-8">
                 <AchievementsPreview />
               </div>
@@ -151,6 +152,8 @@ function Index() {
                 <span className="capitalize">
                   {activeTab === "analytics"
                     ? "Weekly Analytics"
+                    : activeTab === "wellbeing"
+                    ? "Wellbeing Tracker"
                     : activeTab}
                 </span>
               )}
