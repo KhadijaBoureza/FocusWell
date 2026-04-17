@@ -11,6 +11,8 @@ const Reminder = require("./models/Reminder");
 const PomodoroSession = require("./models/PomodoroSession");
 const Event = require("./models/Event");
 const PomodoroSettings = require("./models/PomodoroSettings");
+const TaskCompletion = require("./models/TaskCompletion");
+
 const app = express();
 
 app.use(cors());
@@ -70,7 +72,15 @@ app.put("/tasks/:id", async (req, res) => {
       updates.completed = movingToDone;
 
       if (movingToDone && !wasAlreadyDone) {
-        updates.completedAt = new Date().toISOString();
+        const completedAt = new Date().toISOString();
+        updates.completedAt = completedAt;
+
+        await TaskCompletion.create({
+          taskId: existingTask._id.toString(),
+          title: existingTask.title,
+          priority: existingTask.priority,
+          completedAt,
+        });
       }
 
       if (!movingToDone) {
@@ -88,6 +98,15 @@ app.put("/tasks/:id", async (req, res) => {
   }
 });
 
+// Get task completion
+app.get("/task-completions", async (req, res) => {
+  try {
+    const completions = await TaskCompletion.find().sort({ completedAt: -1 });
+    res.json(completions);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 // DELETE a task
 app.delete("/tasks/:id", async (req, res) => {
   try {
