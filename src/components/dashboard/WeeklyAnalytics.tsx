@@ -37,7 +37,7 @@ function calculateDailyTrend(data: WeeklyDataItem[]) {
     return todayTasks > 0 ? 100 : 0;
   }
 
-  return Math.round(((todayTasks - yesterdayTasks) / yesterdayTasks) * 100);
+  return Math.round(((todayTasks - todayTasks) / yesterdayTasks) * 100);
 }
 
 function formatFocus(minutes: number) {
@@ -79,7 +79,7 @@ function WeeklyAnalytics({ tasks, refreshKey }: WeeklyAnalyticsProps) {
         }
 
         pomodoro.sessions.forEach((s: any) => {
-          if (!s.completedAt) return;
+          if (!s.completedAt || s.mode !== "work") return;
 
           const date = new Date(s.completedAt).toISOString().split("T")[0];
           const found = last7Days.find((d) => d.date === date);
@@ -111,9 +111,7 @@ function WeeklyAnalytics({ tasks, refreshKey }: WeeklyAnalyticsProps) {
 
   const totalFocus = weeklyData.reduce((sum, day) => sum + day.focus, 0);
   const totalTasks = weeklyData.reduce((sum, day) => sum + day.tasks, 0);
-  const avgFocus = (totalFocus / 7 || 0).toFixed(2);
   const taskTrend = calculateDailyTrend(weeklyData);
-  const trendPct = calculateDailyTrend(weeklyData);
 
   return (
     <div className="glass-card neon-border-blue p-6">
@@ -134,7 +132,7 @@ function WeeklyAnalytics({ tasks, refreshKey }: WeeklyAnalyticsProps) {
             {taskTrend}%
           </div>
           <p className="mt-1 text-[11px] text-muted-foreground">
-             Daily Task Trend
+            Daily Task Trend
           </p>
         </div>
       </div>
