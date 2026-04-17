@@ -46,7 +46,7 @@ function formatFocus(minutes: number) {
   if (safeMinutes <= 0) return "0m";
 
   if (safeMinutes < 60) {
-    return safeMinutes + "m"; // 👈 force string
+    return safeMinutes + "m";
   }
 
   const hours = Math.floor(safeMinutes / 60);
@@ -113,22 +113,29 @@ function WeeklyAnalytics({ tasks, refreshKey }: WeeklyAnalyticsProps) {
   const totalTasks = weeklyData.reduce((sum, day) => sum + day.tasks, 0);
   const avgFocus = (totalFocus / 7 || 0).toFixed(2);
   const taskTrend = calculateDailyTrend(weeklyData);
+  const trendPct = calculateDailyTrend(weeklyData);
 
   return (
     <div className="glass-card neon-border-blue p-6">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex items-start justify-between">
         <div className="flex items-center gap-2">
           <BarChart3 size={18} className="text-primary" />
           <h2 className="text-lg font-semibold">Weekly Summary</h2>
         </div>
 
-        <div
-          className={`flex items-center gap-1 text-xs ${taskTrend >= 0 ? "text-green-500" : "text-red-500"
+        <div className="text-right">
+          <div
+            className={`flex items-center justify-end gap-1 text-xs ${
+              taskTrend >= 0 ? "text-green-500" : "text-red-500"
             }`}
-        >
-          <TrendingUp size={14} />
-          {taskTrend >= 0 ? "+" : ""}
-          {taskTrend}%
+          >
+            <TrendingUp size={14} />
+            {taskTrend >= 0 ? "+" : ""}
+            {taskTrend}%
+          </div>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+             Daily Task Trend
+          </p>
         </div>
       </div>
 
