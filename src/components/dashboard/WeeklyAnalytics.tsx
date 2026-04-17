@@ -24,6 +24,14 @@ type WeeklyAnalyticsProps = {
   refreshKey: number;
 };
 
+type TaskCompletion = {
+  _id: string;
+  taskId: string;
+  title: string;
+  priority: "low" | "medium" | "high";
+  completedAt: string;
+};
+
 function calculateDailyTrend(data: WeeklyDataItem[]) {
   if (data.length < 2) return 0;
 
@@ -37,7 +45,7 @@ function calculateDailyTrend(data: WeeklyDataItem[]) {
     return todayTasks > 0 ? 100 : 0;
   }
 
-  return Math.round(((todayTasks - todayTasks) / yesterdayTasks) * 100);
+  return Math.round(((todayTasks - yesterdayTasks) / yesterdayTasks) * 100);
 }
 
 function formatFocus(minutes: number) {
@@ -62,6 +70,9 @@ function WeeklyAnalytics({ tasks, refreshKey }: WeeklyAnalyticsProps) {
     const loadData = async () => {
       try {
         const pomodoro = await api.getPomodoro();
+
+        const completionsRes = await fetch("http://localhost:5000/task-completions");
+        const completions: TaskCompletion[] = await completionsRes.json();
 
         const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         const last7Days: WeeklyDataItem[] = [];
@@ -89,10 +100,10 @@ function WeeklyAnalytics({ tasks, refreshKey }: WeeklyAnalyticsProps) {
           }
         });
 
-        tasks.forEach((task) => {
-          if (task.column !== "done" || !task.completedAt) return;
+        completions.forEach((completion) => {
+          if (!completion.completedAt) return;
 
-          const date = new Date(task.completedAt).toISOString().split("T")[0];
+          const date = new Date(completion.completedAt).toISOString().split("T")[0];
           const found = last7Days.find((d) => d.date === date);
 
           if (found) {
