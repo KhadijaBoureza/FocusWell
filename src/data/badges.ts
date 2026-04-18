@@ -40,7 +40,7 @@ export const allBadges: Badge[] = [
 
     // Breaks
     { id: "break-taker", title: "Rest & Recharge", description: "Take 5 breaks", icon: Coffee, colorClass: "text-neon-cyan", bgClass: "bg-neon-cyan/10 border-neon-cyan/30", glowClass: "shadow-[0_0_15px_hsl(var(--neon-cyan)/0.3)]", check: (s) => s.breaks >= 5 },
-    { id: "zen-master", title: "Zen Master", description: "Take 20 breaks", icon: Sunrise, colorClass: "text-neon-green", bgClass: "bg-neon-green/10 border-neon-green/30", glowClass: "shadow-[0_0_15px_hsl(var(--neon-green)/0.3)]", check: (s) => s.breaks >= 20 },
+    { id: "zen-master", title: "Balanced Mind Master", description: "Take 20 breaks", icon: Sunrise, colorClass: "text-neon-green", bgClass: "bg-neon-green/10 border-neon-green/30", glowClass: "shadow-[0_0_15px_hsl(var(--neon-green)/0.3)]", check: (s) => s.breaks >= 20 },
 
     // Tasks
     { id: "task-starter", title: "Task Slayer", description: "Complete 10 tasks", icon: CheckCircle2, colorClass: "text-neon-green", bgClass: "bg-neon-green/10 border-neon-green/30", glowClass: "shadow-[0_0_15px_hsl(var(--neon-green)/0.3)]", check: (s) => s.tasksCompleted >= 10 },
