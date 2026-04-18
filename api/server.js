@@ -12,12 +12,70 @@ const PomodoroSession = require("./models/PomodoroSession");
 const Event = require("./models/Event");
 const PomodoroSettings = require("./models/PomodoroSettings");
 const TaskCompletion = require("./models/TaskCompletion");
+const UserAchievement = require("./models/UserAchievement");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
+
+// Achievements 
+
+app.get("/achievements", async (req, res) => {
+  try {
+    const achievements = await UserAchievement.find().sort({ unlockedAt: -1 });
+    res.json(achievements);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/achievements/unlock", async (req, res) => {
+  try {
+    const { badgeId, progress = 0 } = req.body;
+
+    if (!badgeId) {
+      return res.status(400).json({ error: "badgeId is required" });
+    }
+
+    let achievement = await UserAchievement.findOne({ badgeId });
+
+    if (!achievement) {
+      achievement = new UserAchievement({
+        badgeId,
+        unlocked: true,
+        unlockedAt: new Date(),
+        progress,
+      });
+    } else if (!achievement.unlocked) {
+      achievement.unlocked = true;
+      achievement.unlockedAt = new Date();
+      achievement.progress = progress;
+    }
+
+    await achievement.save();
+    res.json(achievement);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put("/achievements/:badgeId/progress", async (req, res) => {
+  try {
+    const { progress } = req.body;
+
+    const achievement = await UserAchievement.findOneAndUpdate(
+      { badgeId: req.params.badgeId },
+      { badgeId: req.params.badgeId, progress: progress ?? 0 },
+      { new: true, upsert: true }
+    );
+
+    res.json(achievement);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 // Tasks
 
 // GET all tasks
