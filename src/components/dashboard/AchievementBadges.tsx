@@ -1,24 +1,27 @@
 import { Trophy, CheckCircle2 } from "lucide-react";
-import { allBadges, getBadgeStats, getUnlockedCount } from "../../data/badges";
+import { allBadges } from "../../data/badges";
 import { useAchievementStats } from "@/hooks/useAchievementStats";
 
 const AchievementBadges = () => {
-  const { data, loading, error } = useAchievementStats();
+  const { achievements, loading, error } = useAchievementStats();
 
   if (loading) {
     return <div className="p-6 text-muted-foreground">Loading achievements...</div>;
   }
 
-  if (error || !data) {
+  if (error) {
     return <div className="p-6 text-red-500">Failed to load achievements.</div>;
   }
 
-  const stats = getBadgeStats(data);
-  const { unlocked, total, legendUnlocked } = getUnlockedCount(stats);
+  const unlockedIds = new Set(
+    achievements.filter((a) => a.unlocked).map((a) => a.badgeId)
+  );
+
+  const unlocked = unlockedIds.size;
+  const total = allBadges.length;
 
   const isEarned = (badge: typeof allBadges[0]) => {
-    if (badge.id === "legend") return legendUnlocked;
-    return badge.check(stats);
+    return unlockedIds.has(badge.id);
   };
 
   return (
