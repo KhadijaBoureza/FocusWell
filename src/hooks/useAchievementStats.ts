@@ -10,24 +10,44 @@ type AchievementStatsResponse = {
   reminders: any[];
 };
 
+type UserAchievement = {
+  _id: string;
+  badgeId: string;
+  unlocked: boolean;
+  unlockedAt: string | null;
+  progress: number;
+};
+
 export const useAchievementStats = () => {
   const [data, setData] = useState<AchievementStatsResponse | null>(null);
+  const [achievements, setAchievements] = useState<UserAchievement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
+        setError("");
 
-        const res = await fetch("http://localhost:5000/achievements/stats");
+        const [statsRes, achievementsRes] = await Promise.all([
+          fetch("http://localhost:5000/achievements/stats"),
+          fetch("http://localhost:5000/achievements"),
+        ]);
 
-        if (!res.ok) {
+        if (!statsRes.ok) {
           throw new Error("Failed to fetch achievement stats");
         }
 
-        const json = await res.json();
-        setData(json);
+        if (!achievementsRes.ok) {
+          throw new Error("Failed to fetch achievements");
+        }
+
+        const statsJson = await statsRes.json();
+        const achievementsJson = await achievementsRes.json();
+
+        setData(statsJson);
+        setAchievements(achievementsJson);
       } catch (err: any) {
         setError(err.message || "Something went wrong");
       } finally {
@@ -35,8 +55,8 @@ export const useAchievementStats = () => {
       }
     };
 
-    fetchStats();
+    fetchData();
   }, []);
 
-  return { data, loading, error };
+  return { data, achievements, loading, error };
 };
