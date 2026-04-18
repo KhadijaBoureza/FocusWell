@@ -1,11 +1,9 @@
 import { Trophy, CheckCircle2 } from "lucide-react";
-import { allBadges, getBadgeStats, getUnlockedCount } from "../../data/badges";
+import { allBadges } from "../../data/badges";
 import { useAchievementStats } from "@/hooks/useAchievementStats";
 
-const DEMO_MODE = true; // preview first badge earned
-
 const AchievementsPreview = () => {
-  const { data, loading, error } = useAchievementStats();
+  const { achievements, loading, error } = useAchievementStats();
 
   if (loading) {
     return (
@@ -15,7 +13,7 @@ const AchievementsPreview = () => {
     );
   }
 
-  if (error || !data) {
+  if (error) {
     return (
       <div className="glass-card neon-border-violet p-5 h-full flex items-center justify-center">
         <span className="text-sm text-red-500">Failed to load achievements.</span>
@@ -23,13 +21,15 @@ const AchievementsPreview = () => {
     );
   }
 
-  const stats = getBadgeStats(data);
-  const { unlocked, total, legendUnlocked } = getUnlockedCount(stats);
+  const unlockedIds = new Set(
+    achievements.filter((a) => a.unlocked).map((a) => a.badgeId)
+  );
+
+  const unlocked = unlockedIds.size;
+  const total = allBadges.length;
 
   const isEarned = (badge: typeof allBadges[0]) => {
-    if (DEMO_MODE && badge.id === "first-focus") return true;
-    if (badge.id === "legend") return legendUnlocked;
-    return badge.check(stats);
+    return unlockedIds.has(badge.id);
   };
 
   return (
