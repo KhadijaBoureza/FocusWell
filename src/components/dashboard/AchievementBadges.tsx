@@ -39,10 +39,10 @@ const AchievementBadges = () => {
           </div>
         </div>
 
-        <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+        <div className="h-3 w-full overflow-hidden rounded-full border border-border/50 bg-muted/60">
           <div
-            className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-700"
-            style={{ width: `${(unlocked / total) * 100}%` }}
+            className="h-full rounded-full bg-gradient-to-r from-primary via-violet-500 to-accent shadow-[0_0_14px_hsl(var(--primary)/0.45)] transition-all duration-700"
+            style={{ width: `${unlocked === 0 ? 0 : Math.max(4, (unlocked / total) * 100)}%` }}
           />
         </div>
       </div>
@@ -54,16 +54,14 @@ const AchievementBadges = () => {
           return (
             <div
               key={badge.id}
-              className={`relative p-4 rounded-xl border text-center transition-all duration-300 ${
-                earned
+              className={`relative p-4 rounded-xl border text-center transition-all duration-300 ${earned
                   ? `${badge.bgClass} ${badge.glowClass}`
                   : "bg-muted/10 border-border/30"
-              }`}
+                }`}
             >
               <div
-                className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-3 ${
-                  earned ? badge.bgClass : "bg-muted/20"
-                }`}
+                className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-3 ${earned ? badge.bgClass : "bg-muted/20"
+                  }`}
               >
                 <badge.icon
                   size={24}
@@ -72,17 +70,15 @@ const AchievementBadges = () => {
               </div>
 
               <h3
-                className={`font-mono text-xs font-bold mb-1 ${
-                  earned ? "text-foreground" : "text-muted-foreground/50"
-                }`}
+                className={`font-mono text-xs font-bold mb-1 ${earned ? "text-foreground" : "text-muted-foreground/50"
+                  }`}
               >
                 {badge.title}
               </h3>
 
               <p
-                className={`text-[10px] leading-tight ${
-                  earned ? "text-muted-foreground" : "text-muted-foreground/40"
-                }`}
+                className={`text-[10px] leading-tight ${earned ? "text-muted-foreground" : "text-muted-foreground/40"
+                  }`}
               >
                 {badge.description}
               </p>
