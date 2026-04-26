@@ -2,7 +2,12 @@ require("./db");
 
 
 const express = require("express");
+
+const PORT = 5000;
+
 const cors = require("cors");
+
+
 
 const Note = require("./models/Note");
 const Task = require("./models/Task");
@@ -15,8 +20,10 @@ const TaskCompletion = require("./models/TaskCompletion");
 const UserAchievement = require("./models/UserAchievement");
 const MoodEntry = require("./models/MoodEntry");
 const JournalEntry = require("./models/JournalEntry");
+const createTasksRouter = require("./routes/tasks");
 const eventsRoutes = require("./routes/events");
 const notesRoutes = require("./routes/notes");
+
 
 const app = express();
 
@@ -25,6 +32,7 @@ app.use(express.json());
 
 app.use("/events", eventsRoutes);
 app.use("/notes", notesRoutes);
+app.use("/tasks", createTasksRouter({ evaluateAchievements }));
 
 // Achievements 
 
@@ -100,110 +108,8 @@ app.put("/achievements/:badgeId/progress", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-// Tasks
 
-// GET all tasks
-app.get("/tasks", async (req, res) => {
-  try {
-    const tasks = await Task.find().sort({ _id: -1 });
-    res.json(tasks);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
 
-// ADD a task
-app.post("/tasks", async (req, res) => {
-  try {
-    const isDone = req.body.column === "done";
-
-    const newTask = new Task({
-      title: req.body.title,
-      column: req.body.column || "todo",
-      priority: req.body.priority || "medium",
-      completed: isDone,
-      createdAt: new Date().toISOString(),
-      completedAt: isDone ? new Date().toISOString() : null,
-    });
-
-    await newTask.save();
-
-    await evaluateAchievements();
-
-    res.json(newTask);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// UPDATE a task
-app.put("/tasks/:id", async (req, res) => {
-  try {
-    const existingTask = await Task.findById(req.params.id);
-
-    if (!existingTask) {
-      return res.status(404).json({ error: "Task not found" });
-    }
-
-    const updates = {
-      ...req.body,
-    };
-
-    if (req.body.column) {
-      const movingToDone = req.body.column === "done";
-      const wasAlreadyDone = existingTask.column === "done";
-
-      updates.completed = movingToDone;
-
-      if (movingToDone && !wasAlreadyDone) {
-        const completedAt = new Date().toISOString();
-        updates.completedAt = completedAt;
-
-        await TaskCompletion.create({
-          taskId: existingTask._id.toString(),
-          title: existingTask.title,
-          priority: existingTask.priority,
-          completedAt,
-        });
-      }
-
-      if (!movingToDone) {
-        updates.completedAt = null;
-      }
-    }
-
-    const updatedTask = await Task.findByIdAndUpdate(req.params.id, updates, {
-      new: true,
-    });
-
-    await evaluateAchievements();
-
-    res.json(updatedTask);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Get task completion
-app.get("/task-completions", async (req, res) => {
-  try {
-    const completions = await TaskCompletion.find().sort({ completedAt: -1 });
-    res.json(completions);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-// DELETE a task
-app.delete("/tasks/:id", async (req, res) => {
-  try {
-    await Task.findByIdAndDelete(req.params.id);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-const PORT = 5000;
 
 // Thoughts
 
