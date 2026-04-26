@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Heart, Sparkles, Trash2, TrendingUp, X, BookOpen } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
+// import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { Textarea } from "@/components/ui/textarea";
+import { api } from "@/lib/api";
 
 // ============================================================
 // Types & constants
@@ -11,13 +12,13 @@ import { Textarea } from "@/components/ui/textarea";
 type MoodValue = 1 | 2 | 3 | 4 | 5;
 
 interface MoodEntry {
-  id: string;
+  _id: string;
   mood: MoodValue;
   timestamp: string; // ISO
 }
 
 interface JournalEntry {
-  id: string;
+  _id: string;
   text: string;
   mood?: MoodValue;
   timestamp: string;
@@ -66,11 +67,10 @@ const MoodCheckIn = ({ selected, onSelect, onLog }: MoodCheckInProps) => (
         <button
           key={m.value}
           onClick={() => onSelect(m.value)}
-          className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all ${
-            selected === m.value
-              ? "border-primary bg-primary/15 neon-glow-violet scale-105"
-              : "border-border bg-muted/30 hover:bg-muted/50 hover:border-primary/40"
-          }`}
+          className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all ${selected === m.value
+            ? "border-primary bg-primary/15 neon-glow-violet scale-105"
+            : "border-border bg-muted/30 hover:bg-muted/50 hover:border-primary/40"
+            }`}
         >
           <span className="text-2xl md:text-3xl">{m.emoji}</span>
           <span className="text-[10px] md:text-xs font-mono text-muted-foreground uppercase tracking-wider">
@@ -107,24 +107,24 @@ const MoodSupportPanel = ({ mood, onDismiss }: MoodSupportPanelProps) => {
   const headline = isAwful
     ? "I'm sorry to hear that."
     : isLow
-    ? "That's okay. Be gentle with yourself."
-    : isOkay
-    ? "Logged. Hope it lifts."
-    : isGood
-    ? "Glad to hear it. Keep going."
-    : "That's what I love to hear.";
+      ? "That's okay. Be gentle with yourself."
+      : isOkay
+        ? "Logged. Hope it lifts."
+        : isGood
+          ? "Glad to hear it. Keep going."
+          : "That's what I love to hear.";
 
   const subline = isAwful
     ? "Pin a quick worry to your dashboard, or journal why you feel this way in detail. Writing is like magic — it helps more than you'd think."
     : isLow
-    ? "Pin what's bothering you to your dashboard so it's out of your head, or journal why you feel this way. Writing helps."
-    : isOkay
-    ? "Pin a quick thought to your dashboard, or journal what's on your mind. Writing things out really helps."
-    : isGood
-    ? "Whatever you're doing — keep at it. Journal what's working so you remember."
-    : isGreat
-    ? "Hold onto this. Journal what's working and lean into more of it."
-    : null;
+      ? "Pin what's bothering you to your dashboard so it's out of your head, or journal why you feel this way. Writing helps."
+      : isOkay
+        ? "Pin a quick thought to your dashboard, or journal what's on your mind. Writing things out really helps."
+        : isGood
+          ? "Whatever you're doing — keep at it. Journal what's working so you remember."
+          : isGreat
+            ? "Hold onto this. Journal what's working and lean into more of it."
+            : null;
 
   const borderClass = isAwful || isLow ? "neon-border-pink" : isOkay ? "neon-border-blue" : "neon-border-green";
 
@@ -270,7 +270,7 @@ const JournalCard = ({ draft, entries, onDraftChange, onSave, onDelete }: Journa
           {entries.slice(0, 10).map((j) => {
             const mood = j.mood ? MOODS.find((m) => m.value === j.mood) : null;
             return (
-              <div key={j.id} className="p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-all group">
+              <div key={j._id} className="p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-all group">
                 <div className="flex items-start justify-between gap-3 mb-1.5">
                   <div className="flex items-center gap-2">
                     {mood && <span className="text-base">{mood.emoji}</span>}
@@ -279,7 +279,7 @@ const JournalCard = ({ draft, entries, onDraftChange, onSave, onDelete }: Journa
                     </p>
                   </div>
                   <button
-                    onClick={() => onDelete(j.id)}
+                    onClick={() => onDelete(j._id)}
                     className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-all"
                     aria-label="Delete journal entry"
                   >
@@ -321,7 +321,7 @@ const MoodHistory = ({ grouped, totalEntries, onDelete }: MoodHistoryProps) => (
                 const mood = MOODS.find((m) => m.value === e.mood)!;
                 return (
                   <div
-                    key={e.id}
+                    key={e._id}
                     className="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-all group"
                   >
                     <div className="flex items-center gap-3">
@@ -334,7 +334,7 @@ const MoodHistory = ({ grouped, totalEntries, onDelete }: MoodHistoryProps) => (
                       </div>
                     </div>
                     <button
-                      onClick={() => onDelete(e.id)}
+                      onClick={() => onDelete(e._id)}
                       className="opacity-0 group-hover:opacity-100 p-1.5 text-muted-foreground hover:text-destructive transition-all"
                       aria-label="Delete entry"
                     >
@@ -356,38 +356,87 @@ const MoodHistory = ({ grouped, totalEntries, onDelete }: MoodHistoryProps) => (
 // ============================================================
 
 const WellbeingTracker = (_props: WellbeingTrackerProps) => {
-  const [entries, setEntries] = useLocalStorage<MoodEntry[]>("focuswell-mood-entries", []);
-  const [journalEntries, setJournalEntries] = useLocalStorage<JournalEntry[]>("focuswell-journal-entries", []);
+  const [entries, setEntries] = useState<MoodEntry[]>([]);
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<MoodValue | null>(null);
   const [support, setSupport] = useState<{ mood: MoodValue } | null>(null);
   const [standaloneJournal, setStandaloneJournal] = useState("");
 
-  const logMood = () => {
+
+  useEffect(() => {
+    async function loadWellbeingData() {
+      try {
+        setLoading(true);
+
+        const [moods, journal] = await Promise.all([
+          api.getMoodEntries(),
+          api.getJournalEntries(),
+        ]);
+
+        setEntries(moods);
+        setJournalEntries(journal);
+      } catch (err) {
+        console.error("Failed to load wellbeing data", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadWellbeingData();
+  }, []);
+
+  const logMood = async () => {
     if (!selected) return;
-    const entry: MoodEntry = {
-      id: crypto.randomUUID(),
-      mood: selected,
-      timestamp: new Date().toISOString(),
-    };
-    setEntries([entry, ...entries]);
-    setSupport({ mood: selected });
-    setSelected(null);
+
+    const moodLabel = MOODS.find((m) => m.value === selected)?.label.toLowerCase();
+    if (!moodLabel) return;
+
+    try {
+      const newEntry = await api.createMoodEntry({
+        mood: moodLabel,
+      });
+
+      setEntries((prev) => [newEntry, ...prev]);
+      setSupport({ mood: selected });
+      setSelected(null);
+    } catch (err) {
+      console.error("Failed to log mood", err);
+    }
   };
 
-  const saveStandaloneJournal = () => {
+  const saveStandaloneJournal = async () => {
     if (!standaloneJournal.trim()) return;
-    const entry: JournalEntry = {
-      id: crypto.randomUUID(),
-      text: standaloneJournal.trim(),
-      timestamp: new Date().toISOString(),
-    };
-    setJournalEntries([entry, ...journalEntries]);
-    setStandaloneJournal("");
+
+    try {
+      const newEntry = await api.createJournalEntry({
+        text: standaloneJournal.trim(),
+      });
+
+      setJournalEntries((prev) => [newEntry, ...prev]);
+      setStandaloneJournal("");
+    } catch (err) {
+      console.error("Failed to save journal entry", err);
+    }
   };
 
-  const deleteJournalEntry = (id: string) =>
-    setJournalEntries(journalEntries.filter((j) => j.id !== id));
-  const deleteEntry = (id: string) => setEntries(entries.filter((e) => e.id !== id));
+  const deleteJournalEntry = async (id: string) => {
+    try {
+      await api.deleteJournalEntry(id);
+      setJournalEntries((prev) => prev.filter((j) => j._id !== id));
+    } catch (err) {
+      console.error("Failed to delete journal entry", err);
+    }
+  };
+
+  const deleteEntry = async (id: string) => {
+    try {
+      await api.deleteMoodEntry(id);
+      setEntries((prev) => prev.filter((e) => e._id !== id));
+    } catch (err) {
+      console.error("Failed to delete mood entry", err);
+    }
+  };
 
   // Build last-7-days chart data (average mood per day)
   const chartData = useMemo(() => {
