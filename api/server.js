@@ -24,6 +24,7 @@ const createTasksRouter = require("./routes/tasks");
 const eventsRoutes = require("./routes/events");
 const notesRoutes = require("./routes/notes");
 const createThoughtsRouter = require("./routes/thoughts");
+const createRemindersRouter = require("./routes/reminders");
 
 
 const app = express();
@@ -35,6 +36,8 @@ app.use("/events", eventsRoutes);
 app.use("/notes", notesRoutes);
 app.use("/tasks", createTasksRouter({ evaluateAchievements }));
 app.use("/thoughts", createThoughtsRouter({ evaluateAchievements }));
+app.use("/reminders", createRemindersRouter({ evaluateAchievements }));
+
 
 // Achievements 
 
@@ -111,62 +114,6 @@ app.put("/achievements/:badgeId/progress", async (req, res) => {
   }
 });
 
-
-// Reminders
-
-// Get reminders
-app.get("/reminders", async (req, res) => {
-  try {
-    const reminders = await Reminder.find().sort({ _id: -1 });
-    res.json(reminders);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Create reminders
-app.post("/reminders", async (req, res) => {
-  try {
-    const newReminder = new Reminder({
-      title: req.body.title,
-      time: req.body.time,
-      date: req.body.date,
-      completed: false,
-      createdAt: new Date().toISOString(),
-    });
-
-    await newReminder.save();
-
-    await evaluateAchievements();
-
-    res.json(newReminder);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Update reminders
-app.put("/reminders/:id", async (req, res) => {
-  try {
-    const updated = await Reminder.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
-
-    res.json(updated);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Delete reminders
-app.delete("/reminders/:id", async (req, res) => {
-  try {
-    await Reminder.findByIdAndDelete(req.params.id);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
 
 
 
