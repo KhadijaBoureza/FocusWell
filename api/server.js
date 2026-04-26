@@ -41,23 +41,28 @@ app.get("/achievements", async (req, res) => {
 app.post("/achievements/unlock", async (req, res) => {
   try {
     const { badgeId, progress = 0 } = req.body;
+    const todayKey = new Date().toISOString().split("T")[0];
 
     if (!badgeId) {
       return res.status(400).json({ error: "badgeId is required" });
     }
 
-    let achievement = await UserAchievement.findOne({ badgeId });
+    let achievement = await UserAchievement.findOne({
+      badgeId,
+      date: todayKey,
+    });
 
     if (!achievement) {
       achievement = new UserAchievement({
         badgeId,
+        date: todayKey,
         unlocked: true,
         unlockedAt: new Date(),
         progress,
       });
-    } else if (!achievement.unlocked) {
+    } else {
       achievement.unlocked = true;
-      achievement.unlockedAt = new Date();
+      achievement.unlockedAt = achievement.unlockedAt || new Date();
       achievement.progress = progress;
     }
 
@@ -71,10 +76,18 @@ app.post("/achievements/unlock", async (req, res) => {
 app.put("/achievements/:badgeId/progress", async (req, res) => {
   try {
     const { progress } = req.body;
+    const todayKey = new Date().toISOString().split("T")[0];
 
     const achievement = await UserAchievement.findOneAndUpdate(
-      { badgeId: req.params.badgeId },
-      { badgeId: req.params.badgeId, progress: progress ?? 0 },
+      {
+        badgeId: req.params.badgeId,
+        date: todayKey,
+      },
+      {
+        badgeId: req.params.badgeId,
+        date: todayKey,
+        progress: progress ?? 0,
+      },
       { new: true, upsert: true }
     );
 
