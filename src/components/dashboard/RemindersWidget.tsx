@@ -91,14 +91,22 @@ function RemindersWidget() {
     }
   }
 
-  function isPastDate(dateStr: string) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const inputDate = new Date(dateStr + "T00:00:00");
-    inputDate.setHours(0, 0, 0, 0);
+  function isPastReminder(dateStr: string, timeStr: string) {
+    const reminderDateTime = new Date(`${dateStr}T${timeStr}:00`);
+    const now = new Date();
 
-    return inputDate < today;
+    return reminderDateTime < now;
   }
+
+  function isPastDate(dateStr: string) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const inputDate = new Date(dateStr + "T00:00:00");
+  inputDate.setHours(0, 0, 0, 0);
+
+  return inputDate < today;
+}
 
   async function addReminder() {
     setError("");
@@ -109,7 +117,12 @@ function RemindersWidget() {
     }
 
     if (isPastDate(selectedDate)) {
-      setError("You can't add a reminder for a past date. Please choose today or a future date.");
+      setError("Invalid reminder date. Please choose today or a future date.");
+      return;
+    }
+
+    if (isPastReminder(selectedDate, time)) {
+      setError("Invalid reminder time. Please choose a future time.");
       return;
     }
 
@@ -287,7 +300,10 @@ function RemindersWidget() {
                 ref={timeInputRef}
                 type="time"
                 value={time}
-                onChange={(e) => setTime(e.target.value)}
+                onChange={(e) => {
+                  setTime(e.target.value);
+                  setError("");
+                }}
                 className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
               />
             </div>
@@ -302,10 +318,10 @@ function RemindersWidget() {
             </button>
           </div>
           {error && (
-  <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-    {error}
-  </p>
-)}
+            <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+              {error}
+            </p>
+          )}
         </div>
       )}
 
