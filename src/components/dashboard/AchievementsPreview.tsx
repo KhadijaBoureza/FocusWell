@@ -46,10 +46,12 @@ const AchievementsPreview = () => {
         </span>
       </div>
 
-      <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden mb-3">
+      <div className="mb-3 h-2 w-full overflow-hidden rounded-full border border-violet-400/30 bg-muted/60">
         <div
-          className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-700"
-          style={{ width: `${(unlocked / total) * 100}%` }}
+          className="h-full rounded-full bg-violet-500 shadow-[0_0_12px_rgba(139,92,246,0.65)] transition-all duration-700"
+          style={{
+            width: `${unlocked === 0 ? 0 : Math.max(4, (unlocked / total) * 100)}%`,
+          }}
         />
       </div>
 
@@ -60,17 +62,15 @@ const AchievementsPreview = () => {
           return (
             <div
               key={badge.id}
-              className={`relative flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all duration-300 ${
-                earned
-                  ? `${badge.bgClass} ${badge.glowClass}`
-                  : "bg-muted/10 border-border/30"
-              }`}
+              className={`relative flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all duration-300 ${earned
+                ? `${badge.bgClass} ${badge.glowClass}`
+                : "bg-muted/10 border-border/30"
+                }`}
               title={`${badge.title} — ${badge.description}`}
             >
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center mb-1.5 ${
-                  earned ? badge.bgClass : "bg-muted/20"
-                }`}
+                className={`w-10 h-10 rounded-full flex items-center justify-center mb-1.5 ${earned ? badge.bgClass : "bg-muted/20"
+                  }`}
               >
                 <badge.icon
                   size={20}
@@ -79,9 +79,8 @@ const AchievementsPreview = () => {
               </div>
 
               <span
-                className={`text-[9px] font-mono leading-tight text-center w-full ${
-                  earned ? "text-foreground font-bold" : "text-muted-foreground/40"
-                }`}
+                className={`text-[9px] font-mono leading-tight text-center w-full ${earned ? "text-foreground font-bold" : "text-muted-foreground/40"
+                  }`}
               >
                 {badge.title}
               </span>
