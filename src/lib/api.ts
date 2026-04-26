@@ -25,7 +25,7 @@ export const api = {
     if (!res.ok) throw new Error("Failed to fetch tasks");
     return await res.json();
   },
-  
+
   async saveSettings(durations: any) {
     const res = await fetch(`${BASE}/pomodoro/settings`, {
       method: "PUT",
@@ -38,10 +38,70 @@ export const api = {
     if (!res.ok) throw new Error("Failed to save settings");
     return await res.json();
   },
-  async getPomodoroSettings() {
-  const res = await fetch(`${BASE}/pomodoro/settings`);
-  if (!res.ok) throw new Error("Failed to fetch pomodoro settings");
-  return await res.json();
-},
 
+  async getPomodoroSettings() {
+    const res = await fetch(`${BASE}/pomodoro/settings`);
+    if (!res.ok) throw new Error("Failed to fetch pomodoro settings");
+    return await res.json();
+  },
+
+  async getMoodEntries() {
+    const res = await fetch(`${BASE}/wellbeing/moods`);
+    if (!res.ok) throw new Error("Failed to fetch mood entries");
+    return await res.json();
+  },
+
+  async createMoodEntry(data: { mood: number; timestamp?: string }) {
+    const res = await fetch(`${BASE}/wellbeing/moods`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!res.ok) throw new Error("Failed to create mood entry");
+    return await res.json();
+  },
+
+  async deleteMoodEntry(id: string) {
+    const res = await fetch(`${BASE}/wellbeing/moods/${id}`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) throw new Error("Failed to delete mood entry");
+    return await res.json();
+  },
+
+  async getJournalEntries() {
+    const res = await fetch(`${BASE}/wellbeing/journal`);
+    if (!res.ok) throw new Error("Failed to fetch journal entries");
+    return await res.json();
+  },
+
+  async createJournalEntry(data: {
+    text: string;
+    mood?: number;
+    timestamp?: string;
+  }) {
+    const res = await fetch(`${BASE}/wellbeing/journal`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!res.ok) throw new Error("Failed to create journal entry");
+    return await res.json();
+  },
+
+  async deleteJournalEntry(id: string) {
+    const res = await fetch(`${BASE}/wellbeing/journal/${id}`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) throw new Error("Failed to delete journal entry");
+    return await res.json();
+  },
 };
