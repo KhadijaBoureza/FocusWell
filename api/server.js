@@ -24,7 +24,12 @@ app.use(express.json());
 
 app.get("/achievements", async (req, res) => {
   try {
-    const achievements = await UserAchievement.find().sort({ unlockedAt: -1 });
+    const todayKey = new Date().toISOString().split("T")[0];
+
+    const achievements = await UserAchievement.find({
+      date: todayKey,
+    }).sort({ unlockedAt: -1 });
+
     res.json(achievements);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -104,6 +109,8 @@ app.post("/tasks", async (req, res) => {
 
     await newTask.save();
 
+    await evaluateAchievements();
+
     res.json(newTask);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -149,6 +156,8 @@ app.put("/tasks/:id", async (req, res) => {
     const updatedTask = await Task.findByIdAndUpdate(req.params.id, updates, {
       new: true,
     });
+
+    await evaluateAchievements();
 
     res.json(updatedTask);
   } catch (err) {
@@ -198,6 +207,7 @@ app.post("/notes", async (req, res) => {
     });
 
     await newNote.save();
+    await evaluateAchievements();
 
     res.json(newNote);
   } catch (err) {
@@ -248,6 +258,9 @@ app.post("/thoughts", async (req, res) => {
     });
 
     await newThought.save();
+
+    await evaluateAchievements();
+
     res.json(newThought);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -301,6 +314,9 @@ app.post("/reminders", async (req, res) => {
     });
 
     await newReminder.save();
+
+    await evaluateAchievements();
+
     res.json(newReminder);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -377,8 +393,9 @@ app.post("/pomodoro/session", async (req, res) => {
       duration: req.body.duration,
       completedAt: req.body.completedAt,
     });
-
     await newSession.save();
+
+    await evaluateAchievements();
 
     res.json(newSession);
   } catch (err) {
@@ -504,6 +521,8 @@ app.put("/pomodoro/settings", async (req, res) => {
 
 
 const getAchievementStats = async () => {
+  const todayKey = new Date().toISOString().split("T")[0];
+
   const [sessions, tasks, notes, thoughts, reminders] = await Promise.all([
     PomodoroSession.find(),
     Task.find(),
@@ -512,8 +531,35 @@ const getAchievementStats = async () => {
     Reminder.find(),
   ]);
 
-  const workSessions = sessions.filter((s) => s.mode === "work");
-  const breakSessions = sessions.filter(
+  const todaySessions = sessions.filter((s) => {
+    if (!s.completedAt) return false;
+    return new Date(s.completedAt).toISOString().split("T")[0] === todayKey;
+  });
+
+  const todayTasks = tasks.filter((t) => {
+    if (!t.completedAt && !t.createdAt) return false;
+
+    const dateToCheck = t.completedAt || t.createdAt;
+    return new Date(dateToCheck).toISOString().split("T")[0] === todayKey;
+  });
+
+  const todayNotes = notes.filter((n) => {
+    if (!n.createdAt) return false;
+    return new Date(n.createdAt).toISOString().split("T")[0] === todayKey;
+  });
+
+  const todayThoughts = thoughts.filter((t) => {
+    if (!t.createdAt) return false;
+    return new Date(t.createdAt).toISOString().split("T")[0] === todayKey;
+  });
+
+  const todayReminders = reminders.filter((r) => {
+    if (!r.createdAt) return false;
+    return new Date(r.createdAt).toISOString().split("T")[0] === todayKey;
+  });
+
+  const workSessions = todaySessions.filter((s) => s.mode === "work");
+  const breakSessions = todaySessions.filter(
     (s) => s.mode === "shortBreak" || s.mode === "longBreak"
   );
 
@@ -526,12 +572,97 @@ const getAchievementStats = async () => {
     sessions: workSessions.length,
     minutes: totalMinutes,
     breaks: breakSessions.length,
-    kanban: tasks,
-    notes,
-    thoughts,
-    reminders,
+    kanban: todayTasks,
+    notes: todayNotes,
+    thoughts: todayThoughts,
+    reminders: todayReminders,
   };
 };
+
+async function evaluateAchievements() {
+  const todayKey = new Date().toISOString().split("T")[0];
+  const stats = await getAchievementStats();
+
+  const tasksCompleted = stats.kanban.filter(
+    (t) => t.column === "done" || t.completed === true
+  ).length;
+
+  const totalTasks = stats.kanban.length;
+
+  const badgeRules = [
+    { badgeId: "first-focus", value: stats.sessions, target: 1 },
+    { badgeId: "five-sessions", value: stats.sessions, target: 5 },
+    { badgeId: "ten-sessions", value: stats.sessions, target: 10 },
+    { badgeId: "twenty-sessions", value: stats.sessions, target: 20 },
+
+    { badgeId: "hour-focus", value: stats.minutes, target: 60 },
+    { badgeId: "marathon", value: stats.minutes, target: 500 },
+    { badgeId: "time-lord", value: stats.minutes, target: 1000 },
+
+    { badgeId: "break-taker", value: stats.breaks, target: 5 },
+    { badgeId: "zen-master", value: stats.breaks, target: 20 },
+
+    { badgeId: "task-starter", value: tasksCompleted, target: 10 },
+    { badgeId: "task-master", value: tasksCompleted, target: 50 },
+    { badgeId: "task-creator", value: totalTasks, target: 20 },
+
+    { badgeId: "note-keeper", value: stats.notes.length, target: 5 },
+    { badgeId: "note-hoarder", value: stats.notes.length, target: 20 },
+
+    { badgeId: "deep-thinker", value: stats.thoughts.length, target: 10 },
+    { badgeId: "philosopher", value: stats.thoughts.length, target: 30 },
+
+    { badgeId: "reminder-pro", value: stats.reminders.length, target: 10 },
+  ];
+
+  for (const badge of badgeRules) {
+    const shouldUnlock = badge.value >= badge.target;
+
+    const existing = await UserAchievement.findOne({
+      badgeId: badge.badgeId,
+      date: todayKey,
+    });
+
+    if (!existing) {
+      await UserAchievement.create({
+        badgeId: badge.badgeId,
+        date: todayKey,
+        unlocked: shouldUnlock,
+        unlockedAt: shouldUnlock ? new Date() : null,
+        progress: badge.value,
+      });
+    } else {
+      existing.progress = badge.value;
+
+      if (shouldUnlock && !existing.unlocked) {
+        existing.unlocked = true;
+        existing.unlockedAt = new Date();
+      }
+
+      await existing.save();
+    }
+  }
+
+  const unlockedCount = await UserAchievement.countDocuments({
+    badgeId: { $ne: "legend" },
+    date: todayKey,
+    unlocked: true,
+  });
+
+  if (unlockedCount >= 12) {
+    await UserAchievement.findOneAndUpdate(
+      { badgeId: "legend", date: todayKey },
+      {
+        badgeId: "legend",
+        date: todayKey,
+        unlocked: true,
+        unlockedAt: new Date(),
+        progress: unlockedCount,
+      },
+      { upsert: true, new: true }
+    );
+  }
+}
 
 app.get("/achievements/stats", async (req, res) => {
   try {
