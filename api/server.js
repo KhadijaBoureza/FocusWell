@@ -16,12 +16,16 @@ const UserAchievement = require("./models/UserAchievement");
 const MoodEntry = require("./models/MoodEntry");
 const JournalEntry = require("./models/JournalEntry");
 const eventsRoutes = require("./routes/events");
+const notesRoutes = require("./routes/notes");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
 app.use("/events", eventsRoutes);
+app.use("/notes", notesRoutes);
+
 // Achievements 
 
 app.get("/achievements", async (req, res) => {
@@ -200,57 +204,6 @@ app.delete("/tasks/:id", async (req, res) => {
 });
 
 const PORT = 5000;
-
-// Notes
-
-// GET all notes
-app.get("/notes", async (req, res) => {
-  try {
-    const notes = await Note.find().sort({ _id: -1 });
-    res.json(notes);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ADD note
-app.post("/notes", async (req, res) => {
-  try {
-    const newNote = new Note({
-      ...req.body,
-      createdAt: new Date().toISOString().split("T")[0],
-    });
-
-    await newNote.save();
-    await evaluateAchievements();
-
-    res.json(newNote);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// DELETE note
-app.delete("/notes/:id", async (req, res) => {
-  try {
-    await Note.findByIdAndDelete(req.params.id);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// UPDATE note
-app.put("/notes/:id", async (req, res) => {
-  try {
-    const updated = await Note.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
-    res.json(updated);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
 
 // Thoughts
 
