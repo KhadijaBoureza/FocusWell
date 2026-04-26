@@ -44,6 +44,7 @@ function RemindersWidget() {
 
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const timeInputRef = useRef<HTMLInputElement | null>(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetch("http://localhost:5000/reminders")
@@ -90,9 +91,27 @@ function RemindersWidget() {
     }
   }
 
+  function isPastDate(dateStr: string) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const inputDate = new Date(dateStr + "T00:00:00");
+    inputDate.setHours(0, 0, 0, 0);
+
+    return inputDate < today;
+  }
 
   async function addReminder() {
-    if (!title.trim()) return;
+    setError("");
+
+    if (!title.trim()) {
+      setError("Please enter a reminder title.");
+      return;
+    }
+
+    if (isPastDate(selectedDate)) {
+      setError("You can't add a reminder for a past date. Please choose today or a future date.");
+      return;
+    }
 
     const res = await fetch("http://localhost:5000/reminders", {
       method: "POST",
@@ -106,9 +125,14 @@ function RemindersWidget() {
       }),
     });
 
-    const newReminder = await res.json();
+    const data = await res.json();
 
-    setReminders((prev) => [...prev, newReminder]);
+    if (!res.ok) {
+      setError(data.error || "Failed to add reminder. Please try again.");
+      return;
+    }
+
+    setReminders((prev) => [...prev, data]);
     setTitle("");
     setTime("09:00");
     setSelectedDate(new Date().toISOString().split("T")[0]);
@@ -245,6 +269,7 @@ function RemindersWidget() {
                     const month = String(date.getMonth() + 1).padStart(2, "0");
                     const day = String(date.getDate()).padStart(2, "0");
                     setSelectedDate(`${year}-${month}-${day}`);
+                    setError("");
                     setDatePickerOpen(false);
                   }}
                   className="p-3 pointer-events-auto"
@@ -276,6 +301,11 @@ function RemindersWidget() {
               Add
             </button>
           </div>
+          {error && (
+  <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+    {error}
+  </p>
+)}
         </div>
       )}
 
