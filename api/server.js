@@ -20,12 +20,14 @@ const TaskCompletion = require("./models/TaskCompletion");
 const UserAchievement = require("./models/UserAchievement");
 const MoodEntry = require("./models/MoodEntry");
 const JournalEntry = require("./models/JournalEntry");
+
 const createTasksRouter = require("./routes/tasks");
 const eventsRoutes = require("./routes/events");
 const notesRoutes = require("./routes/notes");
 const createThoughtsRouter = require("./routes/thoughts");
 const createRemindersRouter = require("./routes/reminders");
 const createPomodoroRouter = require("./routes/pomodoro");
+const wellbeingRoutes = require("./routes/wellbeing");
 
 
 const app = express();
@@ -35,6 +37,7 @@ app.use(express.json());
 
 app.use("/events", eventsRoutes);
 app.use("/notes", notesRoutes);
+
 
 
 
@@ -275,102 +278,13 @@ app.get("/achievements/stats", async (req, res) => {
   }
 });
 
-// ================= WELLBEING =================
-
-// GET mood entries
-app.get("/wellbeing/moods", async (req, res) => {
-  try {
-    const moods = await MoodEntry.find().sort({ timestamp: -1 });
-    res.json(moods);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// CREATE mood entry
-app.post("/wellbeing/moods", async (req, res) => {
-  try {
-    const moodMap = {
-      awful: { mood: 1, label: "Awful" },
-      low: { mood: 2, label: "Low" },
-      okay: { mood: 3, label: "Okay" },
-      good: { mood: 4, label: "Good" },
-      great: { mood: 5, label: "Great" },
-    };
-
-    const input = String(req.body.mood || "").trim().toLowerCase();
-    const mapped = moodMap[input];
-
-    if (!mapped) {
-      return res.status(400).json({
-        error: "Mood must be one of: awful, low, okay, good, great",
-      });
-    }
-
-    const moodEntry = new MoodEntry({
-      mood: mapped.mood,
-      label: mapped.label,
-      timestamp: req.body.timestamp || new Date().toISOString(),
-    });
-
-    await moodEntry.save();
-    res.json(moodEntry);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// DELETE mood entry
-app.delete("/wellbeing/moods/:id", async (req, res) => {
-  try {
-    await MoodEntry.findByIdAndDelete(req.params.id);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// GET journal entries
-app.get("/wellbeing/journal", async (req, res) => {
-  try {
-    const journal = await JournalEntry.find().sort({ timestamp: -1 });
-    res.json(journal);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// CREATE journal entry
-app.post("/wellbeing/journal", async (req, res) => {
-  try {
-    const journalEntry = new JournalEntry({
-      text: req.body.text,
-      mood: req.body.mood ?? null,
-      timestamp: req.body.timestamp || new Date().toISOString(),
-    });
-
-    await journalEntry.save();
-    res.json(journalEntry);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// DELETE journal entry
-app.delete("/wellbeing/journal/:id", async (req, res) => {
-  try {
-    await JournalEntry.findByIdAndDelete(req.params.id);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
 
 
 app.use("/tasks", createTasksRouter({ evaluateAchievements }));
 app.use("/thoughts", createThoughtsRouter({ evaluateAchievements }));
 app.use("/reminders", createRemindersRouter({ evaluateAchievements }));
 app.use("/pomodoro", createPomodoroRouter({ evaluateAchievements }));
+app.use("/wellbeing", wellbeingRoutes);
 
 // Server runner
 app.listen(PORT, () => {
