@@ -51,7 +51,7 @@ export const api = {
     return await res.json();
   },
 
-  async createMoodEntry(data: { mood: number; timestamp?: string }) {
+  async createMoodEntry(data: { mood: string; timestamp?: string }) {
     const res = await fetch(`${BASE}/wellbeing/moods`, {
       method: "POST",
       headers: {
