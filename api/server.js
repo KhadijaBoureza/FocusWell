@@ -9,19 +9,19 @@ const Task = require("./models/Task");
 const Thought = require("./models/Thought");
 const Reminder = require("./models/Reminder");
 const PomodoroSession = require("./models/PomodoroSession");
-const Event = require("./models/Event");
+// const Event = require("./models/Event");
 const PomodoroSettings = require("./models/PomodoroSettings");
 const TaskCompletion = require("./models/TaskCompletion");
 const UserAchievement = require("./models/UserAchievement");
 const MoodEntry = require("./models/MoodEntry");
 const JournalEntry = require("./models/JournalEntry");
+const eventsRoutes = require("./routes/events");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-
-
+app.use("/events", eventsRoutes);
 // Achievements 
 
 app.get("/achievements", async (req, res) => {
@@ -361,44 +361,7 @@ app.delete("/reminders/:id", async (req, res) => {
   }
 });
 
-// ================= EVENTS =================
 
-// GET all events
-app.get("/events", async (req, res) => {
-  try {
-    const events = await Event.find().sort({ _id: -1 });
-    res.json(events);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// CREATE event
-app.post("/events", async (req, res) => {
-  try {
-    const newEvent = new Event({
-      title: req.body.title,
-      date: req.body.date,
-      time: req.body.time,
-      type: req.body.type || "meeting",
-    });
-
-    await newEvent.save();
-    res.json(newEvent);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// DELETE event
-app.delete("/events/:id", async (req, res) => {
-  try {
-    await Event.findByIdAndDelete(req.params.id);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
 
 // Save session
 app.post("/pomodoro/session", async (req, res) => {
