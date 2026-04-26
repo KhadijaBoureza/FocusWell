@@ -2,7 +2,10 @@ const express = require("express");
 const Task = require("../models/Task");
 const TaskCompletion = require("../models/TaskCompletion");
 
-const router = express.Router();
+module.exports = function createTasksRouter({ evaluateAchievements }) {
+  const router = express.Router();
+
+
 
 // GET tasks
 router.get("/", async (req, res) => {
@@ -102,4 +105,5 @@ router.get("/completions", async (req, res) => {
   }
 });
 
-module.exports = router;
+  return router;
+};

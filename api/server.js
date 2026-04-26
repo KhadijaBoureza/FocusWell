@@ -35,10 +35,8 @@ app.use(express.json());
 
 app.use("/events", eventsRoutes);
 app.use("/notes", notesRoutes);
-app.use("/tasks", createTasksRouter({ evaluateAchievements }));
-app.use("/thoughts", createThoughtsRouter({ evaluateAchievements }));
-app.use("/reminders", createRemindersRouter({ evaluateAchievements }));
-app.use("/pomodoro", createPomodoroRouter({ evaluateAchievements }));
+
+
 
 
 // Achievements 
@@ -367,6 +365,12 @@ app.delete("/wellbeing/journal/:id", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+
+app.use("/tasks", createTasksRouter({ evaluateAchievements }));
+app.use("/thoughts", createThoughtsRouter({ evaluateAchievements }));
+app.use("/reminders", createRemindersRouter({ evaluateAchievements }));
+app.use("/pomodoro", createPomodoroRouter({ evaluateAchievements }));
 
 // Server runner
 app.listen(PORT, () => {
