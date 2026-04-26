@@ -1,17 +1,42 @@
 const express = require("express");
 const PomodoroSession = require("../models/PomodoroSession");
 const PomodoroSettings = require("../models/PomodoroSettings");
+const { requireFields, isOneOf } = require("../utils/validators");
 
 module.exports = function createPomodoroRouter({ evaluateAchievements }) {
   const router = express.Router();
 
+  function isPositiveNumber(value) {
+    return typeof value === "number" && Number.isFinite(value) && value > 0;
+  }
+
   // Save session
   router.post("/session", async (req, res) => {
     try {
+      const missing = requireFields(req.body, ["mode", "duration"]);
+
+      if (missing.length > 0) {
+        return res.status(400).json({
+          error: `Missing required fields: ${missing.join(", ")}`,
+        });
+      }
+
+      if (!isOneOf(req.body.mode, ["work", "shortBreak", "longBreak"])) {
+        return res.status(400).json({
+          error: "Mode must be one of: work, shortBreak, longBreak",
+        });
+      }
+
+      if (!isPositiveNumber(req.body.duration)) {
+        return res.status(400).json({
+          error: "Duration must be a positive number",
+        });
+      }
+
       const newSession = new PomodoroSession({
         mode: req.body.mode,
         duration: req.body.duration,
-        completedAt: req.body.completedAt,
+        completedAt: req.body.completedAt || new Date(),
       });
 
       await newSession.save();
@@ -121,6 +146,19 @@ module.exports = function createPomodoroRouter({ evaluateAchievements }) {
   // Update settings
   router.put("/settings", async (req, res) => {
     try {
+      const fields = ["work", "shortBreak", "longBreak"];
+
+      for (const field of fields) {
+        if (
+          req.body[field] !== undefined &&
+          !isPositiveNumber(req.body[field])
+        ) {
+          return res.status(400).json({
+            error: `${field} must be a positive number`,
+          });
+        }
+      }
+
       let settings = await PomodoroSettings.findOne();
 
       if (!settings) {
