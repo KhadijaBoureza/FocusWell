@@ -23,6 +23,7 @@ const JournalEntry = require("./models/JournalEntry");
 const createTasksRouter = require("./routes/tasks");
 const eventsRoutes = require("./routes/events");
 const notesRoutes = require("./routes/notes");
+const createThoughtsRouter = require("./routes/thoughts");
 
 
 const app = express();
@@ -33,6 +34,7 @@ app.use(express.json());
 app.use("/events", eventsRoutes);
 app.use("/notes", notesRoutes);
 app.use("/tasks", createTasksRouter({ evaluateAchievements }));
+app.use("/thoughts", createThoughtsRouter({ evaluateAchievements }));
 
 // Achievements 
 
@@ -109,60 +111,6 @@ app.put("/achievements/:badgeId/progress", async (req, res) => {
   }
 });
 
-
-
-// Thoughts
-
-// Get all thoughts
-app.get("/thoughts", async (req, res) => {
-  try {
-    const thoughts = await Thought.find().sort({ _id: -1 });
-    res.json(thoughts);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Post Thought
-app.post("/thoughts", async (req, res) => {
-  try {
-    const newThought = new Thought({
-      ...req.body,
-      createdAt: new Date().toISOString(),
-    });
-
-    await newThought.save();
-
-    await evaluateAchievements();
-
-    res.json(newThought);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Delete Thought
-app.delete("/thoughts/:id", async (req, res) => {
-  try {
-    await Thought.findByIdAndDelete(req.params.id);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Update Thought
-app.put("/thoughts/:id", async (req, res) => {
-  try {
-    const updated = await Thought.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
-
-    res.json(updated);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
 
 // Reminders
 
