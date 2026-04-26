@@ -71,8 +71,7 @@ function WeeklyAnalytics({ tasks, refreshKey }: WeeklyAnalyticsProps) {
       try {
         const pomodoro = await api.getPomodoro();
 
-        const completionsRes = await fetch("http://localhost:5000/task-completions");
-        const completions: TaskCompletion[] = await completionsRes.json();
+        const completions: TaskCompletion[] = await api.getTaskCompletions();
 
         const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         const last7Days: WeeklyDataItem[] = [];

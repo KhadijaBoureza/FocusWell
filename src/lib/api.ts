@@ -104,4 +104,10 @@ export const api = {
     if (!res.ok) throw new Error("Failed to delete journal entry");
     return await res.json();
   },
+
+  async getTaskCompletions() {
+    const res = await fetch(`${BASE}/tasks/completions`);
+    if (!res.ok) throw new Error("Failed to fetch task completions");
+    return await res.json();
+  },
 };
