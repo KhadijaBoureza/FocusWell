@@ -4,7 +4,10 @@ const UserAchievementSchema = new mongoose.Schema({
   badgeId: {
     type: String,
     required: true,
-    unique: true,
+  },
+  date: {
+    type: String,
+    required: true,
   },
   unlocked: {
     type: Boolean,
@@ -19,5 +22,7 @@ const UserAchievementSchema = new mongoose.Schema({
     default: 0,
   },
 });
+
+UserAchievementSchema.index({ badgeId: 1, date: 1 }, { unique: true });
 
 module.exports = mongoose.model("UserAchievement", UserAchievementSchema);
