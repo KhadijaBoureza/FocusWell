@@ -82,6 +82,7 @@ const PomodoroTimer = () => {
   const [todayMinutes, setTodayMinutes] = useState(0);
   const [sessionLog, setSessionLog] = useState<SessionLog[]>([]);
   const [breaks, setBreaks] = useState(0);
+  const [timerError, setTimerError] = useState("");
 
   useEffect(() => {
     const loadFromBackend = async () => {
@@ -190,19 +191,21 @@ const PomodoroTimer = () => {
   }, [isAlarmPlaying, activeMode, durations]);
 
   const switchMode = (newMode: Mode) => {
-    setMode(newMode);
-  };
+  setMode(newMode);
+  setTimerError("");
+};
 
   const reset = () => {
-    dismissAlarm();
+  setTimerError("");
+  dismissAlarm();
 
-    if (activeMode === mode) {
-      setIsRunning(false);
-      setActiveMode(null);
-    }
+  if (activeMode === mode) {
+    setIsRunning(false);
+    setActiveMode(null);
+  }
 
-    setTimeLeft(durations[mode] * 60);
-  };
+  setTimeLeft(durations[mode] * 60);
+};
 
   const skipToNext = () => {
     if (mode === "work") switchMode("shortBreak");
@@ -260,7 +263,7 @@ const PomodoroTimer = () => {
   const seconds = displayTime % 60;
 
   const totalSeconds = durations[mode] * 60;
-const progress = 1 - timeLeft / totalSeconds; 
+  const progress = 1 - timeLeft / totalSeconds;
   const circumference = 2 * Math.PI * 90;
   const strokeDashoffset = circumference * (1 - progress);
 
@@ -270,10 +273,25 @@ const progress = 1 - timeLeft / totalSeconds;
     filter: "hsl(var(--destructive) / 0.5)",
   };
 
+  const getRunningModeError = () => {
+    if (!isRunning || !activeMode || activeMode === mode) return "";
+
+    if (activeMode === "work") {
+      return "Focus timer is already running. Stop it before starting a break.";
+    }
+
+    if (activeMode === "shortBreak") {
+      return "Short break is already running. Stop it before starting another timer.";
+    }
+
+    return "Long break is already running. Stop it before starting another timer.";
+  };
+
   const colors =
     isAlarmPlaying && activeMode === mode
       ? finishedColor
       : modeColors[mode];
+
 
   return (
     <div className="glass-card neon-border-violet flex flex-col items-center p-6">
@@ -370,54 +388,62 @@ const progress = 1 - timeLeft / totalSeconds;
       </div>
 
       <div className="relative mb-6 h-52 w-52">
-  <svg className="h-full w-full" viewBox="0 0 200 200">
-    
-    {/* Background track */}
-    <circle
-      cx="100"
-      cy="100"
-      r="90"
-      stroke="hsl(var(--chart-track))"
-      strokeWidth="6"
-      fill="none"
-    />
+        <svg className="h-full w-full" viewBox="0 0 200 200">
 
-    {/* Single animated ring (THIS is the fix) */}
-    <circle
-      cx="100"
-      cy="100"
-      r="90"
-      stroke={colors.stroke}
-      strokeWidth="6"
-      fill="none"
-      strokeLinecap="round"
-      strokeDasharray={circumference}
-      strokeDashoffset={circumference * (1 - progress)}
-      transform="rotate(-90 100 100)"
-      style={{
-        filter: `drop-shadow(0 0 8px ${colors.filter})`,
-      }}
-    />
-  </svg>
+          {/* Background track */}
+          <circle
+            cx="100"
+            cy="100"
+            r="90"
+            stroke="hsl(var(--chart-track))"
+            strokeWidth="6"
+            fill="none"
+          />
 
-  <div className="absolute inset-0 flex flex-col items-center justify-center">
-    <span
-      className={`font-mono text-5xl font-bold ${colors.text} ${
-        isFinished ? "animate-pulse" : ""
-      }`}
-    >
-      {String(minutes).padStart(2, "0")}:
-      {String(seconds).padStart(2, "0")}
-    </span>
-    <span className="mt-2 text-xs text-muted-foreground">
-      {MODE_LABELS[mode]}
-    </span>
-  </div>
-</div>
+          {/* Single animated ring (THIS is the fix) */}
+          <circle
+            cx="100"
+            cy="100"
+            r="90"
+            stroke={colors.stroke}
+            strokeWidth="6"
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={circumference * (1 - progress)}
+            transform="rotate(-90 100 100)"
+            style={{
+              filter: `drop-shadow(0 0 8px ${colors.filter})`,
+            }}
+          />
+        </svg>
+
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span
+            className={`font-mono text-5xl font-bold ${colors.text} ${isFinished ? "animate-pulse" : ""
+              }`}
+          >
+            {String(minutes).padStart(2, "0")}:
+            {String(seconds).padStart(2, "0")}
+          </span>
+          <span className="mt-2 text-xs text-muted-foreground">
+            {MODE_LABELS[mode]}
+          </span>
+        </div>
+      </div>
 
       <div className="flex gap-3">
         <button
           onClick={() => {
+            const error = getRunningModeError();
+
+            if (error) {
+              setTimerError(error);
+              return;
+            }
+
+            setTimerError("");
+
             if (!isRunning) {
               setActiveMode(mode);
               setIsRunning(true);
@@ -448,6 +474,11 @@ const progress = 1 - timeLeft / totalSeconds;
           <SkipForward size={22} />
         </button>
       </div>
+      {timerError && (
+        <p className="mt-3 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-center text-xs text-destructive">
+          {timerError}
+        </p>
+      )}
 
       <div className="mt-5 flex items-center gap-4 text-xs text-muted-foreground">
         <div className="flex items-center gap-1.5">
