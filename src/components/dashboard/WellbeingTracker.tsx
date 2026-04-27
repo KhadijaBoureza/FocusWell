@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Wind, Pencil } from "lucide-react";
 import WellbeingTechniques from "./WellbeingTechniques";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
@@ -16,6 +16,8 @@ import { JournalCard, PasscodeDialog } from "./wellbeing/JournalComponents";
 interface WellbeingTrackerProps {
   onNavigate?: (tab: string) => void;
 }
+
+
 
 const WellbeingTracker = ({ onNavigate }: WellbeingTrackerProps) => {
   const [entries, setEntries] = useLocalStorage<MoodEntry[]>("focuswell-mood-entries", []);
@@ -222,6 +224,29 @@ const WellbeingTracker = ({ onNavigate }: WellbeingTrackerProps) => {
     });
     return Array.from(map.entries()).slice(0, 7);
   }, [entries]);
+
+  useEffect(() => {
+  const shouldOpenJournal = localStorage.getItem("focuswell-open-journal");
+
+  if (shouldOpenJournal === "true") {
+    setShowJournal(true);
+    localStorage.removeItem("focuswell-open-journal");
+  }
+}, []);
+useEffect(() => {
+  const shouldOpenJournal = localStorage.getItem("focuswell-open-journal");
+  const shouldOpenTechniques = localStorage.getItem("focuswell-open-techniques");
+
+  if (shouldOpenJournal === "true") {
+    setShowJournal(true);
+    localStorage.removeItem("focuswell-open-journal");
+  }
+
+  if (shouldOpenTechniques === "true") {
+    setShowTechniques(true);
+    localStorage.removeItem("focuswell-open-techniques");
+  }
+}, []);
 
   return (
     <div className="space-y-6 animate-fade-in">
