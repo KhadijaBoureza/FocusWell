@@ -81,65 +81,51 @@ function Index() {
         return <WellbeingTracker onNavigate={setActiveTab} />;
 
       case "analytics":
-        return (
-          <WeeklyAnalytics
-            tasks={tasks}
-            refreshKey={analyticsRefreshKey}
-          />
-        );
+        return <WeeklyAnalytics tasks={tasks} refreshKey={analyticsRefreshKey} />;
 
       case "achievements":
         return <AchievementBadges />;
 
-     default:
-  return (
-    <div className="space-y-6">
-      <StatsBar tasks={tasks} />
+      default:
+        return (
+          <div className="space-y-6">
+            <StatsBar tasks={tasks} />
 
-      {}
-      <MoodCheckInCompact onNavigate={setActiveTab} />
+            <MoodCheckInCompact onNavigate={setActiveTab} />
 
-      {/* ✅ Kanban + Timer */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <KanbanBoard tasks={tasks} setTasks={setTasks} />
-        </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <KanbanBoard tasks={tasks} setTasks={setTasks} />
+              </div>
 
-        <div>
-          <PomodoroTimer />
-        </div>
-      </div>
+              <div>
+                <PomodoroTimer />
+              </div>
+            </div>
 
-      {}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <CalendarWidget />
-        <NotesWidget />
-        <RemindersWidget />
-      </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <CalendarWidget />
+              <NotesWidget />
+              <RemindersWidget />
+            </div>
 
-      {}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <AchievementsPreview />
-        </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <AchievementsPreview />
+              </div>
 
-        <div>
-          <ThoughtOrganizer />
-        </div>
-      </div>
+              <div>
+                <ThoughtOrganizer />
+              </div>
+            </div>
 
-      {}
-      <WeeklyAnalytics
-        tasks={tasks}
-        refreshKey={analyticsRefreshKey}
-      />
-    </div>
-  );
+            <WeeklyAnalytics tasks={tasks} refreshKey={analyticsRefreshKey} />
+          </div>
+        );
     }
   };
 
   return (
-
     <div className="flex min-h-screen bg-background">
       <DashboardSidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
@@ -163,7 +149,9 @@ function Index() {
             </h1>
 
             <p className="mt-1 text-sm text-muted-foreground">
-              {activeTab === "dashboard" ? "Here's your productivity overview" : "Stay focused, stay well"}
+              {activeTab === "dashboard"
+                ? "Here's your productivity overview"
+                : "Stay focused, stay well"}
             </p>
           </div>
 
