@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
+
 import { Wind, Pencil } from "lucide-react";
 import WellbeingTechniques from "./WellbeingTechniques";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { api } from "@/lib/api";
 import { encryptText, decryptText, hashPasscode } from "@/lib/journalCrypto";
 import { toast } from "@/hooks/use-toast";
-import { MoodEntry, JournalEntry, MoodValue } from "./wellbeing/types";
+import type { MoodEntry, JournalEntry, MoodValue } from "./wellbeing/types";
 import {
   MoodCheckIn,
   MoodSupportPanel,
@@ -20,7 +22,7 @@ interface WellbeingTrackerProps {
 
 
 const WellbeingTracker = ({ onNavigate }: WellbeingTrackerProps) => {
-  const [entries, setEntries] = useLocalStorage<MoodEntry[]>("focuswell-mood-entries", []);
+  const [entries, setEntries] = useState<MoodEntry[]>([]);
   const [journalEntries, setJournalEntries] = useLocalStorage<JournalEntry[]>("focuswell-journal-entries", []);
   const [passcodeHash, setPasscodeHash] = useLocalStorage<string | null>("focuswell-journal-passcode", null);
   const [selected, setSelected] = useState<MoodValue | null>(null);
@@ -30,17 +32,48 @@ const WellbeingTracker = ({ onNavigate }: WellbeingTrackerProps) => {
   const [showJournal, setShowJournal] = useState(false);
   const [showTechniques, setShowTechniques] = useState(false);
 
-  const logMood = () => {
-    if (!selected) return;
-    const entry: MoodEntry = {
-      _id: crypto.randomUUID(),
-      mood: selected,
-      timestamp: new Date().toISOString(),
-    };
-    setEntries([entry, ...entries]);
-    setSupport({ mood: selected });
-    setSelected(null);
+  useEffect(() => {
+  const loadMoods = async () => {
+    try {
+      const moods = await api.getMoodEntries();
+      setEntries(moods);
+    } catch (err) {
+      console.error(err);
+    }
   };
+
+  loadMoods();
+}, []);
+
+  const moodValueToLabel = (mood: MoodValue) => {
+  const labels: Record<MoodValue, string> = {
+    1: "awful",
+    2: "low",
+    3: "okay",
+    4: "good",
+    5: "great",
+  };
+
+  return labels[mood];
+};
+
+const logMood = async () => {
+  if (!selected) return;
+
+  const moodToLog = selected;
+
+  try {
+    const created = await api.createMoodEntry({
+      mood: moodValueToLabel(moodToLog),
+    });
+
+    setEntries((prev) => [created, ...prev]);
+    setSupport({ mood: moodToLog });
+    setSelected(null);
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   // Passcode dialog state
   const [pcDialog, setPcDialog] = useState<
@@ -181,7 +214,15 @@ const WellbeingTracker = ({ onNavigate }: WellbeingTrackerProps) => {
     setJournalEntries(journalEntries.filter((j) => j._id !== id));
     lockEntryAgain(id);
   };
-  const deleteEntry = (id: string) => setEntries(entries.filter((e) => e._id !== id));
+
+  const deleteEntry = async (id: string) => {
+  try {
+    await api.deleteMoodEntry(id);
+    setEntries((prev) => prev.filter((e) => e._id !== id));
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   // Build last-7-days chart data (average mood per day)
   const chartData = useMemo(() => {
@@ -225,14 +266,6 @@ const WellbeingTracker = ({ onNavigate }: WellbeingTrackerProps) => {
     return Array.from(map.entries()).slice(0, 7);
   }, [entries]);
 
-  useEffect(() => {
-  const shouldOpenJournal = localStorage.getItem("focuswell-open-journal");
-
-  if (shouldOpenJournal === "true") {
-    setShowJournal(true);
-    localStorage.removeItem("focuswell-open-journal");
-  }
-}, []);
 useEffect(() => {
   const shouldOpenJournal = localStorage.getItem("focuswell-open-journal");
   const shouldOpenTechniques = localStorage.getItem("focuswell-open-techniques");
