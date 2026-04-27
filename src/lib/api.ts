@@ -80,23 +80,24 @@ export const api = {
   },
 
   async createJournalEntry(data: {
-    text: string;
-    mood?: number;
-    locked?: boolean;
-    encrypted?: any;
-    timestamp?: string;
-  }) {
-    const res = await fetch(`${BASE}/wellbeing/journal`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
+  text: string;
+  mood?: number | null;
+  locked?: boolean;
+  encrypted?: any;
+  timestamp?: string;
+}) {
+  const res = await fetch(`${BASE}/wellbeing/journal`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
 
-    if (!res.ok) throw new Error("Failed to create journal entry");
-    return await res.json();
-  },
+  if (!res.ok) throw new Error("Failed to create journal entry");
+  return await res.json();
+},
+  
 
   async deleteJournalEntry(id: string) {
     const res = await fetch(`${BASE}/wellbeing/journal/${id}`, {
