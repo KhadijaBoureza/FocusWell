@@ -227,33 +227,33 @@ const WellbeingTracker = ({ onNavigate }: WellbeingTrackerProps) => {
     <div className="space-y-6 animate-fade-in">
       <MoodCheckIn selected={selected} onSelect={setSelected} onLog={logMood} />
 
-      {/* Quick action bar — always available */}
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => {
-            setShowJournal((v) => !v);
-          }}
-          className={`inline-flex items-center gap-2 px-3 py-2 rounded-md font-mono text-xs transition-all border ${
-            showJournal
-              ? "bg-secondary/15 text-secondary border-secondary/30"
-              : "bg-muted/30 text-muted-foreground border-border hover:text-foreground hover:bg-muted/50"
-          }`}
-        >
-          <Pencil size={14} />
-          {showJournal ? "Hide journal" : "Write journal"}
-        </button>
-        <button
-          onClick={() => setShowTechniques((v) => !v)}
-          className={`inline-flex items-center gap-2 px-3 py-2 rounded-md font-mono text-xs transition-all border ${
-            showTechniques
-              ? "bg-primary/15 text-primary border-primary/30"
-              : "bg-muted/30 text-muted-foreground border-border hover:text-foreground hover:bg-muted/50"
-          }`}
-        >
-          <Wind size={14} />
-          {showTechniques ? "Hide reset" : "Take a little reset"}
-        </button>
-      </div>
+      {/* Quick action bar — only before mood is logged */}
+      {!support && (
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => {
+              setShowJournal((v) => !v);
+            }}
+            className={`inline-flex items-center gap-2 px-3 py-2 rounded-md font-mono text-xs transition-all border ${showJournal
+                ? "bg-secondary/15 text-secondary border-secondary/30"
+                : "bg-muted/30 text-muted-foreground border-border hover:text-foreground hover:bg-muted/50"
+              }`}
+          >
+            <Pencil size={14} />
+            {showJournal ? "Hide journal" : "Write journal"}
+          </button>
+          <button
+            onClick={() => setShowTechniques((v) => !v)}
+            className={`inline-flex items-center gap-2 px-3 py-2 rounded-md font-mono text-xs transition-all border ${showTechniques
+                ? "bg-primary/15 text-primary border-primary/30"
+                : "bg-muted/30 text-muted-foreground border-border hover:text-foreground hover:bg-muted/50"
+              }`}
+          >
+            <Wind size={14} />
+            {showTechniques ? "Hide reset" : "Take a little reset"}
+          </button>
+          </div>
+)}
 
       {support && (
         <MoodSupportPanel
