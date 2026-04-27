@@ -1,6 +1,6 @@
-# FocusHub Dashboard
+# FocusWell Dashboard
 
-FocusHub is a productivity dashboard designed to help users manage tasks, focus sessions, reminders, notes, and personal reflections in one unified interface.  
+FocusWell is a productivity dashboard designed to help users manage tasks, focus sessions, reminders, notes, and personal reflections in one unified interface.  
 The application provides tools such as a Kanban board, Pomodoro timer, calendar view, and analytics to help users maintain productivity and organization.
 
 ---
