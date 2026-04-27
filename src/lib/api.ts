@@ -82,6 +82,8 @@ export const api = {
   async createJournalEntry(data: {
     text: string;
     mood?: number;
+    locked?: boolean;
+    encrypted?: any;
     timestamp?: string;
   }) {
     const res = await fetch(`${BASE}/wellbeing/journal`, {

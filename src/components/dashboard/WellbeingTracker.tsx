@@ -23,7 +23,7 @@ interface WellbeingTrackerProps {
 
 const WellbeingTracker = ({ onNavigate }: WellbeingTrackerProps) => {
   const [entries, setEntries] = useState<MoodEntry[]>([]);
-  const [journalEntries, setJournalEntries] = useLocalStorage<JournalEntry[]>("focuswell-journal-entries", []);
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
   const [passcodeHash, setPasscodeHash] = useLocalStorage<string | null>("focuswell-journal-passcode", null);
   const [selected, setSelected] = useState<MoodValue | null>(null);
   const [support, setSupport] = useState<{ mood: MoodValue } | null>(null);
@@ -33,47 +33,65 @@ const WellbeingTracker = ({ onNavigate }: WellbeingTrackerProps) => {
   const [showTechniques, setShowTechniques] = useState(false);
 
   useEffect(() => {
-  const loadMoods = async () => {
+    const loadWellbeing = async () => {
+      try {
+        const [moods, journals] = await Promise.all([
+          api.getMoodEntries(),
+          api.getJournalEntries(),
+        ]);
+
+        setEntries(moods);
+        setJournalEntries(journals);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadWellbeing();
+  }, []);
+
+  useEffect(() => {
+    const loadMoods = async () => {
+      try {
+        const moods = await api.getMoodEntries();
+        setEntries(moods);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadMoods();
+  }, []);
+
+  const moodValueToLabel = (mood: MoodValue) => {
+    const labels: Record<MoodValue, string> = {
+      1: "awful",
+      2: "low",
+      3: "okay",
+      4: "good",
+      5: "great",
+    };
+
+    return labels[mood];
+  };
+
+  const logMood = async () => {
+    if (!selected) return;
+
+    const moodToLog = selected;
+
     try {
-      const moods = await api.getMoodEntries();
-      setEntries(moods);
+      const created = await api.createMoodEntry({
+        mood: moodValueToLabel(moodToLog),
+      });
+
+      setEntries((prev) => [created, ...prev]);
+      setSupport({ mood: moodToLog });
+      setSelected(null);
     } catch (err) {
       console.error(err);
     }
   };
-
-  loadMoods();
-}, []);
-
-  const moodValueToLabel = (mood: MoodValue) => {
-  const labels: Record<MoodValue, string> = {
-    1: "awful",
-    2: "low",
-    3: "okay",
-    4: "good",
-    5: "great",
-  };
-
-  return labels[mood];
-};
-
-const logMood = async () => {
-  if (!selected) return;
-
-  const moodToLog = selected;
-
-  try {
-    const created = await api.createMoodEntry({
-      mood: moodValueToLabel(moodToLog),
-    });
-
-    setEntries((prev) => [created, ...prev]);
-    setSupport({ mood: moodToLog });
-    setSelected(null);
-  } catch (err) {
-    console.error(err);
-  }
-};
 
   // Passcode dialog state
   const [pcDialog, setPcDialog] = useState<
@@ -89,9 +107,15 @@ const logMood = async () => {
 
   const hasPasscode = !!passcodeHash;
 
-  const persistJournal = (entry: JournalEntry) => {
-    setJournalEntries([entry, ...journalEntries]);
-    setStandaloneJournal("");
+  const persistJournal = async (entry: Omit<JournalEntry, "_id">) => {
+    try {
+      const created = await api.createJournalEntry(entry);
+      setJournalEntries((prev) => [created, ...prev]);
+      setStandaloneJournal("");
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Could not save journal entry", variant: "destructive" });
+    }
   };
 
   const saveStandaloneJournal = async () => {
@@ -111,7 +135,7 @@ const logMood = async () => {
     }
 
     persistJournal({
-      _id: crypto.randomUUID(),
+      
       text,
       timestamp: new Date().toISOString(),
     });
@@ -135,7 +159,7 @@ const logMood = async () => {
           try {
             const encrypted = await encryptText(text, code);
             persistJournal({
-              _id: crypto.randomUUID(),
+              
               text: "",
               locked: true,
               encrypted,
@@ -163,7 +187,7 @@ const logMood = async () => {
         try {
           const encrypted = await encryptText(text, code);
           persistJournal({
-            _id: crypto.randomUUID(),
+            
             text: "",
             locked: true,
             encrypted,
@@ -210,19 +234,24 @@ const logMood = async () => {
     setPcDialog({ open: true, mode: "setup", intent: "setup-only" });
   };
 
-  const deleteJournalEntry = (id: string) => {
-    setJournalEntries(journalEntries.filter((j) => j._id !== id));
-    lockEntryAgain(id);
-  };
-
-  const deleteEntry = async (id: string) => {
+  const deleteJournalEntry = async (id: string) => {
   try {
-    await api.deleteMoodEntry(id);
-    setEntries((prev) => prev.filter((e) => e._id !== id));
+    await api.deleteJournalEntry(id);
+    setJournalEntries((prev) => prev.filter((j) => j._id !== id));
+    lockEntryAgain(id);
   } catch (err) {
     console.error(err);
   }
 };
+
+  const deleteEntry = async (id: string) => {
+    try {
+      await api.deleteMoodEntry(id);
+      setEntries((prev) => prev.filter((e) => e._id !== id));
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   // Build last-7-days chart data (average mood per day)
   const chartData = useMemo(() => {
@@ -266,20 +295,20 @@ const logMood = async () => {
     return Array.from(map.entries()).slice(0, 7);
   }, [entries]);
 
-useEffect(() => {
-  const shouldOpenJournal = localStorage.getItem("focuswell-open-journal");
-  const shouldOpenTechniques = localStorage.getItem("focuswell-open-techniques");
+  useEffect(() => {
+    const shouldOpenJournal = localStorage.getItem("focuswell-open-journal");
+    const shouldOpenTechniques = localStorage.getItem("focuswell-open-techniques");
 
-  if (shouldOpenJournal === "true") {
-    setShowJournal(true);
-    localStorage.removeItem("focuswell-open-journal");
-  }
+    if (shouldOpenJournal === "true") {
+      setShowJournal(true);
+      localStorage.removeItem("focuswell-open-journal");
+    }
 
-  if (shouldOpenTechniques === "true") {
-    setShowTechniques(true);
-    localStorage.removeItem("focuswell-open-techniques");
-  }
-}, []);
+    if (shouldOpenTechniques === "true") {
+      setShowTechniques(true);
+      localStorage.removeItem("focuswell-open-techniques");
+    }
+  }, []);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -293,8 +322,8 @@ useEffect(() => {
               setShowJournal((v) => !v);
             }}
             className={`inline-flex items-center gap-2 px-3 py-2 rounded-md font-mono text-xs transition-all border ${showJournal
-                ? "bg-secondary/15 text-secondary border-secondary/30"
-                : "bg-muted/30 text-muted-foreground border-border hover:text-foreground hover:bg-muted/50"
+              ? "bg-secondary/15 text-secondary border-secondary/30"
+              : "bg-muted/30 text-muted-foreground border-border hover:text-foreground hover:bg-muted/50"
               }`}
           >
             <Pencil size={14} />
@@ -303,15 +332,15 @@ useEffect(() => {
           <button
             onClick={() => setShowTechniques((v) => !v)}
             className={`inline-flex items-center gap-2 px-3 py-2 rounded-md font-mono text-xs transition-all border ${showTechniques
-                ? "bg-primary/15 text-primary border-primary/30"
-                : "bg-muted/30 text-muted-foreground border-border hover:text-foreground hover:bg-muted/50"
+              ? "bg-primary/15 text-primary border-primary/30"
+              : "bg-muted/30 text-muted-foreground border-border hover:text-foreground hover:bg-muted/50"
               }`}
           >
             <Wind size={14} />
             {showTechniques ? "Hide reset" : "Take a little reset"}
           </button>
-          </div>
-)}
+        </div>
+      )}
 
       {support && (
         <MoodSupportPanel

@@ -71,11 +71,12 @@ router.get("/journal", async (req, res) => {
 router.post("/journal", async (req, res) => {
   try {
     const journalEntry = new JournalEntry({
-      text: req.body.text,
-      mood: req.body.mood ?? null,
-      timestamp: req.body.timestamp || new Date().toISOString(),
-    });
-
+  text: req.body.text ?? "",
+  mood: req.body.mood ?? null,
+  locked: req.body.locked ?? false,
+  encrypted: req.body.encrypted ?? undefined,
+  timestamp: req.body.timestamp || new Date().toISOString(),
+});
     await journalEntry.save();
     res.json(journalEntry);
   } catch (err) {
