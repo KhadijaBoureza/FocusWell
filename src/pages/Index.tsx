@@ -15,6 +15,7 @@ import WeeklyAnalytics from "../components/dashboard/WeeklyAnalytics";
 import AchievementBadges from "@/components/dashboard/AchievementBadges";
 import AchievementsPreview from "@/components/dashboard/AchievementsPreview";
 import WellbeingTracker from "@/components/dashboard/WellbeingTracker";
+import MoodCheckInCompact from "@/components/dashboard/MoodCheckInCompact";
 
 function Index() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -90,53 +91,55 @@ function Index() {
       case "achievements":
         return <AchievementBadges />;
 
-      default:
-        return (
-          <div className="space-y-6">
-            <StatsBar tasks={tasks} />
+     default:
+  return (
+    <div className="space-y-6">
+      <StatsBar tasks={tasks} />
 
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              <div className="lg:col-span-2">
-                <KanbanBoard tasks={tasks} setTasks={setTasks} />
-              </div>
+      {}
+      <MoodCheckInCompact onNavigate={setActiveTab} />
 
-              <div className="space-y-6">
-                <PomodoroTimer />
-              </div>
-            </div>
+      {/* ✅ Kanban + Timer */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <KanbanBoard tasks={tasks} setTasks={setTasks} />
+        </div>
 
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
-              <div className="lg:col-span-4 h-full">
-                <CalendarWidget />
-              </div>
+        <div>
+          <PomodoroTimer />
+        </div>
+      </div>
 
-              <div className="lg:col-span-4 h-full">
-                <NotesWidget />
-              </div>
+      {}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <CalendarWidget />
+        <NotesWidget />
+        <RemindersWidget />
+      </div>
 
-              <div className="lg:col-span-4 h-full">
-                <RemindersWidget />
-              </div>
+      {}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <AchievementsPreview />
+        </div>
 
-              <div className="lg:col-span-8">
-                <AchievementsPreview />
-              </div>
+        <div>
+          <ThoughtOrganizer />
+        </div>
+      </div>
 
-              <div className="lg:col-span-4">
-                <ThoughtOrganizer />
-              </div>
-            </div>
-
-            <WeeklyAnalytics
-              tasks={tasks}
-              refreshKey={analyticsRefreshKey}
-            />
-          </div>
-        );
+      {}
+      <WeeklyAnalytics
+        tasks={tasks}
+        refreshKey={analyticsRefreshKey}
+      />
+    </div>
+  );
     }
   };
 
   return (
+
     <div className="flex min-h-screen bg-background">
       <DashboardSidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
@@ -147,22 +150,20 @@ function Index() {
           <div>
             <h1 className="text-xl font-bold md:text-2xl">
               {activeTab === "dashboard" ? (
-                <>{greeting} c</>
+                <>{greeting}</>
               ) : (
                 <span className="capitalize">
                   {activeTab === "analytics"
                     ? "Weekly Analytics"
                     : activeTab === "wellbeing"
-                    ? "Wellbeing Tracker"
-                    : activeTab}
+                      ? "Wellbeing Tracker"
+                      : activeTab}
                 </span>
               )}
             </h1>
 
             <p className="mt-1 text-sm text-muted-foreground">
-              {activeTab === "dashboard"
-                ? "Here's your productivity overview"
-                : "Stay focused and productive"}
+              {activeTab === "dashboard" ? "Here's your productivity overview" : "Stay focused, stay well"}
             </p>
           </div>
 
