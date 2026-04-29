@@ -1,6 +1,7 @@
 const express = require("express");
 const MoodEntry = require("../models/MoodEntry");
 const JournalEntry = require("../models/JournalEntry");
+const JournalSettings = require("../models/JournalSettings");
 
 const router = express.Router();
 
@@ -93,5 +94,28 @@ router.delete("/journal/:id", async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+router.get("/journal/passcode", async (req, res) => {
+  try {
+    const settings = await JournalSettings.findOne();
+    res.json({ passcodeHash: settings?.passcodeHash ?? null });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
+router.put("/journal/passcode", async (req, res) => {
+  try {
+    const passcodeHash = req.body.passcodeHash ?? null;
+
+    const settings = await JournalSettings.findOneAndUpdate(
+      {},
+      { passcodeHash },
+      { new: true, upsert: true }
+    );
+
+    res.json({ passcodeHash: settings.passcodeHash });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 module.exports = router;
