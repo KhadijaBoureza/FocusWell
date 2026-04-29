@@ -80,24 +80,24 @@ export const api = {
   },
 
   async createJournalEntry(data: {
-  text: string;
-  mood?: number | null;
-  locked?: boolean;
-  encrypted?: any;
-  timestamp?: string;
-}) {
-  const res = await fetch(`${BASE}/wellbeing/journal`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
+    text: string;
+    mood?: number | null;
+    locked?: boolean;
+    encrypted?: any;
+    timestamp?: string;
+  }) {
+    const res = await fetch(`${BASE}/wellbeing/journal`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
 
-  if (!res.ok) throw new Error("Failed to create journal entry");
-  return await res.json();
-},
-  
+    if (!res.ok) throw new Error("Failed to create journal entry");
+    return await res.json();
+  },
+
 
   async deleteJournalEntry(id: string) {
     const res = await fetch(`${BASE}/wellbeing/journal/${id}`, {
@@ -113,4 +113,23 @@ export const api = {
     if (!res.ok) throw new Error("Failed to fetch task completions");
     return await res.json();
   },
+  async getJournalPasscode() {
+    const res = await fetch(`${BASE}/wellbeing/journal/passcode`);
+    if (!res.ok) throw new Error("Failed to fetch journal passcode");
+    return await res.json();
+  },
+
+  async saveJournalPasscode(passcodeHash: string | null) {
+    const res = await fetch(`${BASE}/wellbeing/journal/passcode`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ passcodeHash }),
+    });
+
+    if (!res.ok) throw new Error("Failed to save journal passcode");
+    return await res.json();
+  },
+
 };
