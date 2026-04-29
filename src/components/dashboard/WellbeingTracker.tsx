@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Wind, Pencil } from "lucide-react";
 import WellbeingTechniques from "./WellbeingTechniques";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
+// import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { api } from "@/lib/api";
 import { encryptText, decryptText, hashPasscode } from "@/lib/journalCrypto";
 import { toast } from "@/hooks/use-toast";
@@ -24,7 +24,7 @@ interface WellbeingTrackerProps {
 const WellbeingTracker = ({ onNavigate }: WellbeingTrackerProps) => {
   const [entries, setEntries] = useState<MoodEntry[]>([]);
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
-  const [passcodeHash, setPasscodeHash] = useLocalStorage<string | null>("focuswell-journal-passcode", null);
+  const [passcodeHash, setPasscodeHash] = useState<string | null>(null);
   const [selected, setSelected] = useState<MoodValue | null>(null);
   const [support, setSupport] = useState<{ mood: MoodValue } | null>(null);
   const [standaloneJournal, setStandaloneJournal] = useState("");
@@ -35,32 +35,21 @@ const WellbeingTracker = ({ onNavigate }: WellbeingTrackerProps) => {
   useEffect(() => {
     const loadWellbeing = async () => {
       try {
-        const [moods, journals] = await Promise.all([
+        const [moods, journals, passcode] = await Promise.all([
           api.getMoodEntries(),
           api.getJournalEntries(),
+          api.getJournalPasscode(),
         ]);
 
         setEntries(moods);
         setJournalEntries(journals);
+        setPasscodeHash(passcode.passcodeHash);
       } catch (err) {
         console.error(err);
       }
     };
 
     loadWellbeing();
-  }, []);
-
-  useEffect(() => {
-    const loadMoods = async () => {
-      try {
-        const moods = await api.getMoodEntries();
-        setEntries(moods);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    loadMoods();
   }, []);
 
   const moodValueToLabel = (mood: MoodValue) => {
@@ -135,7 +124,7 @@ const WellbeingTracker = ({ onNavigate }: WellbeingTrackerProps) => {
     }
 
     persistJournal({
-      
+
       text,
       timestamp: new Date().toISOString(),
     });
@@ -149,6 +138,7 @@ const WellbeingTracker = ({ onNavigate }: WellbeingTrackerProps) => {
     // SETUP mode: create or replace passcode hash
     if (pcDialog.mode === "setup") {
       const hash = await hashPasscode(code);
+      await api.saveJournalPasscode(hash);
       setPasscodeHash(hash);
       toast({ title: "Passcode set", description: "Locked entries will be encrypted with this code." });
 
@@ -159,7 +149,7 @@ const WellbeingTracker = ({ onNavigate }: WellbeingTrackerProps) => {
           try {
             const encrypted = await encryptText(text, code);
             persistJournal({
-              
+
               text: "",
               locked: true,
               encrypted,
@@ -187,7 +177,7 @@ const WellbeingTracker = ({ onNavigate }: WellbeingTrackerProps) => {
         try {
           const encrypted = await encryptText(text, code);
           persistJournal({
-            
+
             text: "",
             locked: true,
             encrypted,
@@ -235,14 +225,14 @@ const WellbeingTracker = ({ onNavigate }: WellbeingTrackerProps) => {
   };
 
   const deleteJournalEntry = async (id: string) => {
-  try {
-    await api.deleteJournalEntry(id);
-    setJournalEntries((prev) => prev.filter((j) => j._id !== id));
-    lockEntryAgain(id);
-  } catch (err) {
-    console.error(err);
-  }
-};
+    try {
+      await api.deleteJournalEntry(id);
+      setJournalEntries((prev) => prev.filter((j) => j._id !== id));
+      lockEntryAgain(id);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const deleteEntry = async (id: string) => {
     try {
