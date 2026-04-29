@@ -52,10 +52,23 @@ const getAchievementStats = async () => {
     0
   );
 
+  const tasksCompleted = todayTasks.filter(
+    (t) => t.column === "done" || t.completed === true
+  ).length;
+
+  const totalTasks = todayTasks.length;
+
   return {
     sessions: workSessions.length,
     minutes: totalMinutes,
     breaks: breakSessions.length,
+
+    tasksCompleted,
+    totalTasks,
+    notesCount: todayNotes.length,
+    thoughtsCount: todayThoughts.length,
+    remindersCount: todayReminders.length,
+
     kanban: todayTasks,
     notes: todayNotes,
     thoughts: todayThoughts,
@@ -67,11 +80,8 @@ async function evaluateAchievements() {
   const todayKey = new Date().toISOString().split("T")[0];
   const stats = await getAchievementStats();
 
-  const tasksCompleted = stats.kanban.filter(
-    (t) => t.column === "done" || t.completed === true
-  ).length;
-
-  const totalTasks = stats.kanban.length;
+  const tasksCompleted = stats.tasksCompleted;
+  const totalTasks = stats.totalTasks;
 
   const badgeRules = [
     { badgeId: "first-focus", value: stats.sessions, target: 1 },
@@ -86,11 +96,11 @@ async function evaluateAchievements() {
     { badgeId: "task-starter", value: tasksCompleted, target: 10 },
     { badgeId: "task-master", value: tasksCompleted, target: 50 },
     { badgeId: "task-creator", value: totalTasks, target: 20 },
-    { badgeId: "note-keeper", value: stats.notes.length, target: 5 },
-    { badgeId: "note-hoarder", value: stats.notes.length, target: 20 },
-    { badgeId: "deep-thinker", value: stats.thoughts.length, target: 10 },
-    { badgeId: "philosopher", value: stats.thoughts.length, target: 30 },
-    { badgeId: "reminder-pro", value: stats.reminders.length, target: 10 },
+    { badgeId: "note-keeper", value: stats.notesCount, target: 5 },
+    { badgeId: "note-hoarder", value: stats.notesCount, target: 20 },
+    { badgeId: "deep-thinker", value: stats.thoughtsCount, target: 10 },
+    { badgeId: "philosopher", value: stats.thoughtsCount, target: 30 },
+    { badgeId: "reminder-pro", value: stats.remindersCount, target: 10 },
   ];
 
   for (const badge of badgeRules) {
