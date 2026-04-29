@@ -51,7 +51,12 @@ router.delete("/:id", async (req, res) => {
       return res.status(400).json({ error: "Invalid event id" });
     }
 
-    await Event.findByIdAndDelete(req.params.id);
+    const deleted = await Event.findByIdAndDelete(req.params.id);
+
+    if (!deleted) {
+      return res.status(404).json({ error: "Event not found" });
+    }
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
