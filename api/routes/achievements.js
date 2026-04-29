@@ -4,6 +4,10 @@ const UserAchievement = require("../models/UserAchievement");
 module.exports = function createAchievementsRouter({ getAchievementStats }) {
   const router = express.Router();
 
+  function isValidProgress(value) {
+    return typeof value === "number" && Number.isFinite(value) && value >= 0;
+  }
+
   router.get("/", async (req, res) => {
     try {
       const todayKey = new Date().toISOString().split("T")[0];
@@ -23,8 +27,14 @@ module.exports = function createAchievementsRouter({ getAchievementStats }) {
       const { badgeId, progress = 0 } = req.body;
       const todayKey = new Date().toISOString().split("T")[0];
 
-      if (!badgeId) {
+      if (!badgeId || String(badgeId).trim() === "") {
         return res.status(400).json({ error: "badgeId is required" });
+      }
+
+      if (!isValidProgress(progress)) {
+        return res.status(400).json({
+          error: "progress must be a non-negative number",
+        });
       }
 
       let achievement = await UserAchievement.findOne({
@@ -57,6 +67,16 @@ module.exports = function createAchievementsRouter({ getAchievementStats }) {
     try {
       const { progress } = req.body;
       const todayKey = new Date().toISOString().split("T")[0];
+
+      if (!req.params.badgeId || String(req.params.badgeId).trim() === "") {
+        return res.status(400).json({ error: "badgeId is required" });
+      }
+
+      if (progress !== undefined && !isValidProgress(progress)) {
+        return res.status(400).json({
+          error: "progress must be a non-negative number",
+        });
+      }
 
       const achievement = await UserAchievement.findOneAndUpdate(
         {
