@@ -187,5 +187,15 @@ router.put("/journal/passcode", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+const { getMoodInsights } = require("../services/insightsService");
+
+router.get("/insights", async (req, res) => {
+  try {
+    const insights = await getMoodInsights();
+    res.json(insights);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 module.exports = router;
