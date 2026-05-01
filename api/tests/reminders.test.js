@@ -185,6 +185,3 @@ describe("Reminders API", () => {
   });
 });
 
-afterAll(async () => {
-  await mongoose.connection.close();
-});
