@@ -51,17 +51,18 @@ export const JournalCard = ({
         <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
                 <BookOpen size={18} className="text-primary" />
-                <h2 className="font-mono text-lg font-semibold text-foreground">Journal</h2>
+                <h2 className="font-mono text-lg font-semibold text-foreground">
+                    Journal
+                </h2>
             </div>
-            {!hasPasscode && (
-                <button
-                    onClick={onSetupPasscode}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-muted/30 border border-border hover:border-primary/40 hover:bg-muted/50 transition-all text-[11px] font-mono text-muted-foreground"
-                >
-                    <KeyRound size={12} />
-                    Set passcode
-                </button>
-            )}
+
+            <button
+                onClick={onSetupPasscode}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-muted/30 border border-border hover:border-primary/40 hover:bg-muted/50 transition-all text-[11px] font-mono text-muted-foreground"
+            >
+                <KeyRound size={12} />
+                {hasPasscode ? "Change passcode" : "Set passcode"}
+            </button>
         </div>
         <p className="text-sm text-muted-foreground mb-4">
             A private space to write whatever's on your mind. Writing is like magic — it helps more than you'd think.
@@ -175,25 +176,54 @@ export const JournalCard = ({
 interface PasscodeDialogProps {
     open: boolean;
     mode: "setup" | "unlock";
+    intent?: "unlock-entry" | "save-locked" | "setup-only";
     error?: string | null;
     onSubmit: (code: string) => void;
     onCancel: () => void;
 }
 
-export const PasscodeDialog = ({ open, mode, error, onSubmit, onCancel }: PasscodeDialogProps) => {
+export const PasscodeDialog = ({
+    open,
+    mode,
+    intent = "unlock-entry",
+    error,
+    onSubmit,
+    onCancel,
+}: PasscodeDialogProps) => {
+
     const [code, setCode] = useState("");
     const [confirm, setConfirm] = useState("");
     const [show, setShow] = useState(false);
     const isSetup = mode === "setup";
 
+    const isSavingLocked = intent === "save-locked";
+
+    const title = isSetup
+        ? "Set a passcode"
+        : isSavingLocked
+            ? "Confirm passcode to lock entry"
+            : "Enter passcode";
+
+    const description = isSetup
+        ? "This passcode encrypts locked entries. If you forget it, locked entries cannot be recovered."
+        : isSavingLocked
+            ? "Enter your passcode to encrypt and save this locked journal entry."
+            : "Enter your passcode to unlock this entry.";
+
+    const buttonLabel = isSetup
+        ? "Set passcode"
+        : isSavingLocked
+            ? "Lock entry"
+            : "Unlock";
+
     // reset fields when dialog re-opens
-   useEffect(() => {
-  if (open) {
-    setCode("");
-    setConfirm("");
-    setShow(false);
-  }
-}, [open]);
+    useEffect(() => {
+        if (open) {
+            setCode("");
+            setConfirm("");
+            setShow(false);
+        }
+    }, [open]);
 
     const canSubmit = isSetup ? code.length >= 4 && code === confirm : code.length > 0;
 
@@ -208,12 +238,11 @@ export const PasscodeDialog = ({ open, mode, error, onSubmit, onCancel }: Passco
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <KeyRound size={16} className="text-primary" />
-                        {isSetup ? "Set a passcode" : "Enter passcode"}
+                        {title}
+
                     </DialogTitle>
                     <DialogDescription>
-                        {isSetup
-                            ? "This passcode encrypts locked entries on this device. If you forget it, locked entries cannot be recovered."
-                            : "Enter your passcode to unlock this entry."}
+                        {description}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -266,7 +295,7 @@ export const PasscodeDialog = ({ open, mode, error, onSubmit, onCancel }: Passco
                         disabled={!canSubmit}
                         className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-mono text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-all"
                     >
-                        {isSetup ? "Set passcode" : "Unlock"}
+                        {buttonLabel}
                     </button>
                 </DialogFooter>
             </DialogContent>

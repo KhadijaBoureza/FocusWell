@@ -94,7 +94,7 @@ const WellbeingTracker = ({ onNavigate }: WellbeingTrackerProps) => {
   const [unlockedTexts, setUnlockedTexts] = useState<Record<string, string>>({});
   const unlockedIds = useMemo(() => new Set(Object.keys(unlockedTexts)), [unlockedTexts]);
 
-  const hasPasscode = !!passcodeHash;
+  const hasPasscode = typeof passcodeHash === "string" && passcodeHash.length > 0;
 
   const persistJournal = async (entry: Omit<JournalEntry, "_id">) => {
     try {
@@ -221,7 +221,11 @@ const WellbeingTracker = ({ onNavigate }: WellbeingTrackerProps) => {
 
   const requestSetupPasscode = () => {
     setPcError(null);
-    setPcDialog({ open: true, mode: "setup", intent: "setup-only" });
+    setPcDialog({
+      open: true,
+      mode: "setup",
+      intent: "setup-only",
+    });
   };
 
   const deleteJournalEntry = async (id: string) => {
@@ -317,7 +321,7 @@ const WellbeingTracker = ({ onNavigate }: WellbeingTrackerProps) => {
               }`}
           >
             <Pencil size={14} />
-            {showJournal ? "Hide journal" : "Write journal"}
+            {showJournal ? "Hide journal" : "Show journal"}
           </button>
           <button
             onClick={() => setShowTechniques((v) => !v)}
@@ -370,10 +374,18 @@ const WellbeingTracker = ({ onNavigate }: WellbeingTrackerProps) => {
       />
 
       <MoodHistory grouped={grouped} totalEntries={entries.length} onDelete={deleteEntry} />
-
       <PasscodeDialog
         open={pcDialog.open}
         mode={pcDialog.open ? pcDialog.mode : "unlock"}
+        intent={
+          pcDialog.open
+            ? pcDialog.mode === "setup"
+              ? pcDialog.intent
+              : pcDialog.entryId === "__pending_save__"
+                ? "save-locked"
+                : "unlock-entry"
+            : "unlock-entry"
+        }
         error={pcError}
         onSubmit={handlePasscodeSubmit}
         onCancel={() => {
