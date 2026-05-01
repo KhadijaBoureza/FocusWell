@@ -124,6 +124,3 @@ describe("Notes API", () => {
   });
 });
 
-afterAll(async () => {
-  await mongoose.connection.close();
-});
