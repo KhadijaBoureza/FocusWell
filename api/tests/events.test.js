@@ -125,6 +125,3 @@ describe("Events API", () => {
   });
 });
 
-afterAll(async () => {
-  await mongoose.connection.close();
-});
