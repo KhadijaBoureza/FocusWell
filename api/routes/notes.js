@@ -4,7 +4,6 @@ const Note = require("../models/Note");
 const router = express.Router();
 const { isValidObjectId, requireFields } = require("../utils/validators");
 
-// GET all notes
 router.get("/", async (req, res) => {
   try {
     const notes = await Note.find().sort({ _id: -1 });
@@ -14,10 +13,9 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ADD note
 router.post("/", async (req, res) => {
   try {
-    const missing = requireFields(req.body, ["title", "content"]);
+    const missing = requireFields(req.body, ["title"]);
 
     if (missing.length > 0) {
       return res.status(400).json({
@@ -26,7 +24,13 @@ router.post("/", async (req, res) => {
     }
 
     const newNote = new Note({
-      ...req.body,
+      kind: req.body.kind || "note",
+      title: req.body.title,
+      content: req.body.content || "",
+      color: req.body.color || "violet",
+      area: req.body.kind === "wish" ? req.body.area || "mind" : undefined,
+      horizon: req.body.kind === "wish" ? req.body.horizon || "month" : undefined,
+      done: req.body.kind === "wish" ? Boolean(req.body.done) : false,
       createdAt: new Date().toISOString().split("T")[0],
     });
 
@@ -37,16 +41,21 @@ router.post("/", async (req, res) => {
   }
 });
 
-// UPDATE note
 router.put("/:id", async (req, res) => {
   try {
     if (!isValidObjectId(req.params.id)) {
       return res.status(400).json({ error: "Invalid note id" });
     }
 
-    const updated = await Note.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
+    const updated = await Note.findByIdAndUpdate(
+      req.params.id,
+      {
+        ...req.body,
+        area: req.body.kind === "wish" ? req.body.area : req.body.area,
+        horizon: req.body.kind === "wish" ? req.body.horizon : req.body.horizon,
+      },
+      { new: true }
+    );
 
     if (!updated) {
       return res.status(404).json({ error: "Note not found" });
@@ -58,7 +67,6 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// DELETE note
 router.delete("/:id", async (req, res) => {
   try {
     if (!isValidObjectId(req.params.id)) {
