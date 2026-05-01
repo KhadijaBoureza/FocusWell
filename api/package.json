@@ -12,9 +12,11 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "jspdf": "^4.2.1",
     "mongoose": "^8.23.0"
   },
   "devDependencies": {
