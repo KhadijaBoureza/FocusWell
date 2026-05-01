@@ -16,6 +16,7 @@ import AchievementBadges from "@/components/dashboard/AchievementBadges";
 import AchievementsPreview from "@/components/dashboard/AchievementsPreview";
 import WellbeingTracker from "@/components/dashboard/WellbeingTracker";
 import MoodCheckInCompact from "@/components/dashboard/MoodCheckInCompact";
+import BadgeCelebration from "@/components/dashboard/BadgeCelebration";
 
 function Index() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -160,6 +161,8 @@ function Index() {
 
         <main className="flex-1 px-4 pb-8 md:px-6">{renderContent()}</main>
       </div>
+
+      <BadgeCelebration />
     </div>
   );
 }
