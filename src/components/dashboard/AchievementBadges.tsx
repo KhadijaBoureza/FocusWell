@@ -39,10 +39,12 @@ const AchievementBadges = () => {
           </div>
         </div>
 
-        <div className="h-3 w-full overflow-hidden rounded-full border border-border/50 bg-muted/60">
+        <div className="h-3 w-full overflow-hidden rounded-full border border-violet-400/30 bg-muted/60">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-primary via-violet-500 to-accent shadow-[0_0_14px_hsl(var(--primary)/0.45)] transition-all duration-700"
-            style={{ width: `${unlocked === 0 ? 0 : Math.max(4, (unlocked / total) * 100)}%` }}
+            className="h-full rounded-full bg-violet-500 shadow-[0_0_14px_rgba(139,92,246,0.65)] transition-all duration-700"
+            style={{
+              width: `${unlocked === 0 ? 0 : Math.max(4, (unlocked / total) * 100)}%`,
+            }}
           />
         </div>
       </div>
@@ -55,8 +57,8 @@ const AchievementBadges = () => {
             <div
               key={badge.id}
               className={`relative p-4 rounded-xl border text-center transition-all duration-300 ${earned
-                  ? `${badge.bgClass} ${badge.glowClass}`
-                  : "bg-muted/10 border-border/30"
+                ? `${badge.bgClass} ${badge.glowClass}`
+                : "bg-muted/10 border-border/30"
                 }`}
             >
               <div
