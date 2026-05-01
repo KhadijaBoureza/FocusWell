@@ -43,7 +43,7 @@ function RemindersWidget() {
   );
 
   const [datePickerOpen, setDatePickerOpen] = useState(false);
-  const timeInputRef = useRef<HTMLInputElement | null>(null);
+  const timeInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -99,14 +99,14 @@ function RemindersWidget() {
   }
 
   function isPastDate(dateStr: string) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  const inputDate = new Date(dateStr + "T00:00:00");
-  inputDate.setHours(0, 0, 0, 0);
+    const inputDate = new Date(dateStr + "T00:00:00");
+    inputDate.setHours(0, 0, 0, 0);
 
-  return inputDate < today;
-}
+    return inputDate < today;
+  }
 
   async function addReminder() {
     setError("");
@@ -290,11 +290,16 @@ function RemindersWidget() {
               </PopoverContent>
             </Popover>
 
-            <div className="relative">
-              <div className="flex items-center gap-2 rounded-xl border border-cyan-400/50 bg-background/60 px-3 py-2 text-xs font-mono text-foreground shadow-[0_0_12px_rgba(34,211,238,0.10)] transition-all hover:border-cyan-400/80 hover:bg-muted/40">
-                <Clock size={13} className="text-cyan-400" />
-                {formatDisplayTime(time)}
-              </div>
+            <button
+              type="button"
+              onClick={() => {
+                timeInputRef.current?.showPicker?.();
+                timeInputRef.current?.focus();
+              }}
+              className="relative flex items-center gap-2 rounded-xl border border-cyan-400/50 bg-background/60 px-3 py-2 text-xs font-mono text-foreground shadow-[0_0_12px_rgba(34,211,238,0.10)] transition-all hover:border-cyan-400/80 hover:bg-muted/40"
+            >
+              <Clock size={13} className="text-cyan-400" />
+              {formatDisplayTime(time)}
 
               <input
                 ref={timeInputRef}
@@ -304,9 +309,9 @@ function RemindersWidget() {
                   setTime(e.target.value);
                   setError("");
                 }}
-                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                className="sr-only"
               />
-            </div>
+            </button>
 
             <button
               onClick={addReminder}

@@ -22,7 +22,7 @@ export const MoodCheckIn = ({ selected, onSelect, onLog }: MoodCheckInProps) => 
   <div className="glass-card neon-border-violet p-6">
     <div className="flex items-center gap-2 mb-4">
       <Heart size={18} className="text-primary" />
-      <h2 className="font-mono text-lg font-semibold text-foreground">How are you feeling?</h2>
+      <h2 className="font-mono text-lg font-semibold text-foreground">How is your mood today?</h2>
     </div>
     <p className="text-sm text-muted-foreground mb-5">
       Quick check-in. Log as many times as you'd like throughout the day.

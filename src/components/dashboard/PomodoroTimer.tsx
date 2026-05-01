@@ -309,7 +309,7 @@ const PomodoroTimer = () => {
             </button>
           </DialogTrigger>
 
-          <DialogContent className="sm:max-w-sm">
+         <DialogContent className="sm:max-w-sm border border-border bg-card text-card-foreground shadow-xl">
             <DialogHeader>
               <DialogTitle className="font-mono">Timer Settings</DialogTitle>
             </DialogHeader>
