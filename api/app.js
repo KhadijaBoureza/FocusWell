@@ -1,4 +1,5 @@
-require("./db");
+// require("./db");
+// DB connection is handled in server.js or Jest setup
 
 const express = require("express");
 const cors = require("cors");
