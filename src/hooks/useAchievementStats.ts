@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type AchievementStatsResponse = {
   sessions: number;
@@ -24,39 +24,43 @@ export const useAchievementStats = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError("");
+  const fetchData = useCallback(async () => {
+    try {
+      setError("");
 
-        const [statsRes, achievementsRes] = await Promise.all([
-          fetch("http://localhost:5000/achievements/stats"),
-          fetch("http://localhost:5000/achievements"),
-        ]);
+      const [statsRes, achievementsRes] = await Promise.all([
+        fetch("http://localhost:5000/achievements/stats"),
+        fetch("http://localhost:5000/achievements"),
+      ]);
 
-        if (!statsRes.ok) {
-          throw new Error("Failed to fetch achievement stats");
-        }
+      if (!statsRes.ok) throw new Error("Failed to fetch achievement stats");
+      if (!achievementsRes.ok) throw new Error("Failed to fetch achievements");
 
-        if (!achievementsRes.ok) {
-          throw new Error("Failed to fetch achievements");
-        }
+      const statsJson = await statsRes.json();
+      const achievementsJson = await achievementsRes.json();
 
-        const statsJson = await statsRes.json();
-        const achievementsJson = await achievementsRes.json();
-
-        setData(statsJson);
-        setAchievements(achievementsJson);
-      } catch (err: any) {
-        setError(err.message || "Something went wrong");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+      setData(statsJson);
+      setAchievements(achievementsJson);
+    } catch (err: any) {
+      setError(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  return { data, achievements, loading, error };
+  useEffect(() => {
+    fetchData();
+
+    const interval = setInterval(fetchData, 3000);
+
+    return () => clearInterval(interval);
+  }, [fetchData]);
+
+  return {
+    data,
+    achievements,
+    loading,
+    error,
+    refetchAchievements: fetchData,
+  };
 };
