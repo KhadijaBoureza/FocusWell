@@ -153,6 +153,3 @@ describe("Thoughts API", () => {
   });
 });
 
-afterAll(async () => {
-  await mongoose.connection.close();
-});
