@@ -1,5 +1,5 @@
 const request = require("supertest");
-const mongoose = require("mongoose");
+// const mongoose = require("mongoose");
 const app = require("../app");
 
 describe("Achievements API", () => {
@@ -114,6 +114,6 @@ describe("Achievements API", () => {
   });
 });
 
-afterAll(async () => {
-  await mongoose.connection.close();
-});
+// afterAll(async () => {
+//   await mongoose.connection.close();
+// });
