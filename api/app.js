@@ -14,8 +14,8 @@ const wellbeingRoutes = require("./routes/wellbeing");
 const createAchievementsRouter = require("./routes/achievements");
 
 const {
-  getAchievementStats,
-  evaluateAchievements,
+    getAchievementStats,
+    evaluateAchievements,
 } = require("./services/achievementService");
 
 const app = express();
@@ -29,7 +29,13 @@ app.use("/tasks", createTasksRouter({ evaluateAchievements }));
 app.use("/thoughts", createThoughtsRouter({ evaluateAchievements }));
 app.use("/reminders", createRemindersRouter({ evaluateAchievements }));
 app.use("/pomodoro", createPomodoroRouter({ evaluateAchievements }));
-app.use("/achievements", createAchievementsRouter({ getAchievementStats }));
+app.use(
+  "/achievements",
+  createAchievementsRouter({
+    getAchievementStats,
+    evaluateAchievements,
+  })
+);
 app.use("/wellbeing", wellbeingRoutes);
 
 module.exports = app;
