@@ -231,6 +231,6 @@ describe("Wellbeing API", () => {
   });
 });
 
-afterAll(async () => {
-  await mongoose.connection.close();
-});
+// afterAll(async () => {
+//   await mongoose.connection.close();
+// });
