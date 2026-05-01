@@ -187,6 +187,3 @@ describe("Tasks API", () => {
   });
 });
 
-afterAll(async () => {
-  await mongoose.connection.close();
-});
