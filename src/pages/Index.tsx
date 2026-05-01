@@ -45,6 +45,7 @@ function Index() {
   }, []);
 
   const hour = new Date().getHours();
+  const userName = "there";
 
   let greeting = "Good evening";
   if (hour < 12) greeting = "Good morning";
@@ -133,30 +134,22 @@ function Index() {
       <div className="flex flex-1 flex-col">
         <MobileNav activeTab={activeTab} onTabChange={setActiveTab} />
 
-        <header className="flex items-center justify-between p-4 md:p-6">
+        <header className="p-4 md:p-6 flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold md:text-2xl">
+            <h1 className="font-mono text-xl md:text-2xl font-bold text-foreground">
               {activeTab === "dashboard" ? (
-                <>{greeting}</>
+                <>{greeting}, {userName} <span className="neon-text-violet">👋</span></>
               ) : (
-                <span className="capitalize">
-                  {activeTab === "analytics"
-                    ? "Weekly Analytics"
-                    : activeTab === "wellbeing"
-                      ? "Wellbeing Tracker"
-                      : activeTab}
-                </span>
+                <span className="capitalize">{activeTab === "analytics" ? "Weekly Analytics" : activeTab}</span>
               )}
             </h1>
-
-            <p className="mt-1 text-sm text-muted-foreground">
-              {activeTab === "dashboard"
-                ? "Here's your productivity overview"
-                : "Stay focused, stay well"}
+            <p className="text-sm text-muted-foreground mt-0.5">
+              {activeTab === "dashboard" ? "Welcome to your mind's command center" : "Stay focused, stay well"}
             </p>
           </div>
-
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+          </div>
         </header>
 
         <main className="flex-1 px-4 pb-8 md:px-6">{renderContent()}</main>
