@@ -78,12 +78,21 @@ const AchievementsPreview = () => {
                 />
               </div>
 
-              <span
-                className={`text-[9px] font-mono leading-tight text-center w-full ${earned ? "text-foreground font-bold" : "text-muted-foreground/40"
-                  }`}
-              >
-                {badge.title}
-              </span>
+              <div className="w-full space-y-0.5">
+                <span
+                  className={`block text-[9px] font-mono leading-tight text-center w-full ${earned ? "text-foreground font-bold" : "text-muted-foreground/40 font-bold"
+                    }`}
+                >
+                  {badge.title}
+                </span>
+
+                <p
+                  className={`text-[8px] leading-tight text-center line-clamp-2 ${earned ? "text-muted-foreground" : "text-muted-foreground/40"
+                    }`}
+                >
+                  {badge.description}
+                </p>
+              </div>
 
               {earned && (
                 <div className="absolute top-1 right-1 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
