@@ -1,7 +1,10 @@
 const express = require("express");
 const UserAchievement = require("../models/UserAchievement");
 
-module.exports = function createAchievementsRouter({ getAchievementStats }) {
+module.exports = function createAchievementsRouter({
+  getAchievementStats,
+  evaluateAchievements,
+}) {
   const router = express.Router();
 
   function isValidProgress(value) {
@@ -11,6 +14,8 @@ module.exports = function createAchievementsRouter({ getAchievementStats }) {
   router.get("/", async (req, res) => {
     try {
       const todayKey = new Date().toISOString().split("T")[0];
+
+      await evaluateAchievements();
 
       const achievements = await UserAchievement.find({
         date: todayKey,
@@ -99,6 +104,8 @@ module.exports = function createAchievementsRouter({ getAchievementStats }) {
 
   router.get("/stats", async (req, res) => {
     try {
+      await evaluateAchievements();
+
       const stats = await getAchievementStats();
       res.json(stats);
     } catch (err) {
