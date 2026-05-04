@@ -6,7 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, Mail, Lock, User as UserIcon, Sparkles } from "lucide-react";
+import {
+  Loader2,
+  Mail,
+  Lock,
+  User as UserIcon,
+  LayoutDashboard,
+  ArrowLeft,
+  Lock as LockIcon,
+} from "lucide-react";
 import ThemeToggle from "@/components/dashboard/ThemeToggle";
 
 const Auth = () => {
@@ -42,10 +50,7 @@ const Auth = () => {
         return;
       }
 
-      toast.success(
-        mode === "signin" ? "Welcome back!" : "Account created!"
-      );
-
+      toast.success(mode === "signin" ? "Welcome back!" : "Account created!");
       navigate("/app");
     } finally {
       setSubmitting(false);
@@ -54,20 +59,56 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <header className="p-4 md:p-6 flex items-center justify-between">
+      <header className="px-4 md:px-6 py-4 flex items-center justify-between border-b border-border">
+        <button
+          onClick={() => navigate("/")}
+          className="flex items-center gap-2 group"
+          aria-label="Back to landing"
+        >
+          <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center neon-glow-violet group-hover:scale-105 transition-transform">
+            <LayoutDashboard size={16} className="text-primary" />
+          </div>
+          <span className="font-mono text-base font-bold neon-text-violet">
+            FocusWell
+          </span>
+        </button>
+
         <div className="flex items-center gap-2">
-          <Sparkles className="h-6 w-6 text-primary" />
-          <span className="font-mono text-lg font-bold">FocusWell</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/")}
+            className="gap-1"
+          >
+            <ArrowLeft size={14} />
+            <span className="hidden sm:inline">Home</span>
+          </Button>
+
+          <ThemeToggle />
         </div>
-        <ThemeToggle />
       </header>
 
-      <main className="flex-1 flex items-center justify-center px-4 pb-12">
+      <main className="flex-1 flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <h1 className="font-mono text-3xl font-bold text-foreground mb-2">
-              {mode === "signin" ? "Welcome back" : "Create account"}
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-xs text-primary mb-4">
+              <LockIcon size={12} />
+              Private. Yours. Always.
+            </div>
+
+            <h1 className="font-mono text-3xl md:text-4xl font-bold mb-2">
+              {mode === "signin" ? (
+                <>
+                  Welcome <span className="neon-text-violet">back</span>
+                </>
+              ) : (
+                <>
+                  Create your{" "}
+                  <span className="neon-text-violet">account</span>
+                </>
+              )}
             </h1>
+
             <p className="text-sm text-muted-foreground">
               {mode === "signin"
                 ? "Sign in to keep your focus going."
@@ -75,7 +116,7 @@ const Auth = () => {
             </p>
           </div>
 
-          <div className="bg-card border border-border rounded-2xl p-6 shadow-lg space-y-5">
+          <div className="glass-card p-6 space-y-5">
             <Tabs
               value={mode}
               onValueChange={(v) => setMode(v as "signin" | "signup")}
@@ -92,13 +133,14 @@ const Auth = () => {
                     password={password}
                     setPassword={setPassword}
                   />
+
                   <Button
                     type="submit"
-                    className="w-full"
+                    className="w-full gap-2"
                     disabled={submitting}
                   >
                     {submitting && (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      <Loader2 className="h-4 w-4 animate-spin" />
                     )}
                     Sign in
                   </Button>
@@ -116,9 +158,7 @@ const Auth = () => {
                         type="text"
                         placeholder="Your name"
                         value={displayName}
-                        onChange={(e) =>
-                          setDisplayName(e.target.value)
-                        }
+                        onChange={(e) => setDisplayName(e.target.value)}
                         className="pl-9"
                       />
                     </div>
@@ -132,11 +172,11 @@ const Auth = () => {
 
                   <Button
                     type="submit"
-                    className="w-full"
+                    className="w-full gap-2"
                     disabled={submitting}
                   >
                     {submitting && (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      <Loader2 className="h-4 w-4 animate-spin" />
                     )}
                     Create account
                   </Button>
