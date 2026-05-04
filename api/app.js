@@ -12,6 +12,7 @@ const createRemindersRouter = require("./routes/reminders");
 const createPomodoroRouter = require("./routes/pomodoro");
 const wellbeingRoutes = require("./routes/wellbeing");
 const createAchievementsRouter = require("./routes/achievements");
+const authRoutes = require("./routes/auth");
 
 const {
     getAchievementStats,
@@ -37,5 +38,6 @@ app.use(
   })
 );
 app.use("/wellbeing", wellbeingRoutes);
+app.use("/auth", authRoutes);
 
 module.exports = app;
