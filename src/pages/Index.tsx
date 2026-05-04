@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 
 import { Task } from "@/types/dashboard";
 import DashboardSidebar from "../components/dashboard/DashboardSidebar";
-import MobileNav from "../components/dashboard/MobileNav";
 import ThemeToggle from "../components/dashboard/ThemeToggle";
+import MobileNav from "../components/dashboard/MobileNav";
 import StatsBar from "../components/dashboard/StatsBar";
 import KanbanBoard from "../components/dashboard/KanbanBoard";
 import PomodoroTimer from "../components/dashboard/PomodoroTimer";
@@ -18,10 +18,13 @@ import WellbeingTracker from "@/components/dashboard/WellbeingTracker";
 import MoodCheckInCompact from "@/components/dashboard/MoodCheckInCompact";
 import BadgeCelebration from "@/components/dashboard/BadgeCelebration";
 
+
+
 function Index() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [analyticsRefreshKey, setAnalyticsRefreshKey] = useState(0);
+  
 
   useEffect(() => {
     const loadTasks = async () => {
@@ -138,15 +141,26 @@ function Index() {
           <div>
             <h1 className="font-mono text-xl md:text-2xl font-bold text-foreground">
               {activeTab === "dashboard" ? (
-                <>{greeting}, {userName} <span className="neon-text-violet">👋</span></>
+                <>
+                  {greeting}, {userName}{" "}
+                  <span className="neon-text-violet">👋</span>
+                </>
               ) : (
-                <span className="capitalize">{activeTab === "analytics" ? "Weekly Analytics" : activeTab}</span>
+                <span className="capitalize">
+                  {activeTab === "analytics"
+                    ? "Weekly Analytics"
+                    : activeTab}
+                </span>
               )}
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {activeTab === "dashboard" ? "Welcome to your mind's command center" : "Stay focused, stay well"}
+              {activeTab === "dashboard"
+                ? "Welcome to your mind's command center"
+                : "Stay focused, stay well"}
             </p>
           </div>
+
+          {/* 👉 RIGHT SIDE CONTROLS */}
           <div className="flex items-center gap-2">
             <ThemeToggle />
           </div>

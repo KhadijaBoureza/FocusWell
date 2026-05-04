@@ -47,7 +47,7 @@ export interface Note {
 export interface Reminder {
   id: string;
   text: string;
-  time: string; // HH:mm
-  date: string; // ISO date
+  time: string; 
+  date: string;
   completed: boolean;
 }

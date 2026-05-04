@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   ListTodo,
@@ -12,6 +13,7 @@ import {
   ChevronRight,
   Trophy,
   Heart,
+  Info,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -30,10 +32,12 @@ const navItems = [
   { id: "wellbeing", label: "Wellbeing", icon: Heart },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
   { id: "achievements", label: "Achievements", icon: Trophy },
+  { id: "about", label: "About", icon: Info },
 ];
 
 const DashboardSidebar = ({ activeTab, onTabChange }: SidebarProps) => {
   const [collapsed, setCollapsed] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <aside
@@ -45,6 +49,7 @@ const DashboardSidebar = ({ activeTab, onTabChange }: SidebarProps) => {
         <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center neon-glow-violet">
           <LayoutDashboard size={16} className="text-primary" />
         </div>
+
         {!collapsed && (
           <span className="font-mono text-base font-bold neon-text-violet">
             FocusWell
@@ -53,20 +58,32 @@ const DashboardSidebar = ({ activeTab, onTabChange }: SidebarProps) => {
       </div>
 
       <nav className="flex-1 p-2 space-y-1">
-        {navItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => onTabChange(item.id)}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
-              activeTab === item.id
-                ? "bg-primary/15 text-primary font-medium"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-            }`}
-          >
-            <item.icon size={18} />
-            {!collapsed && <span>{item.label}</span>}
-          </button>
-        ))}
+        {navItems.map((item) => {
+          const isAbout = item.id === "about";
+          const isActive = activeTab === item.id && !isAbout;
+
+          return (
+            <button
+              key={item.id}
+              onClick={() => {
+                if (isAbout) {
+                  navigate("/");
+                  return;
+                }
+
+                onTabChange(item.id);
+              }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
+                isActive
+                  ? "bg-primary/15 text-primary font-medium"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              }`}
+            >
+              <item.icon size={18} />
+              {!collapsed && <span>{item.label}</span>}
+            </button>
+          );
+        })}
       </nav>
 
       <div className="p-2 border-t border-border">
@@ -74,7 +91,7 @@ const DashboardSidebar = ({ activeTab, onTabChange }: SidebarProps) => {
           onClick={() => setCollapsed(!collapsed)}
           className="w-full flex items-center justify-center p-2 rounded-lg text-primary bg-primary/10 hover:bg-primary/20 hover:text-primary transition-all duration-300 relative group"
         >
-          <span className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-primary/10 blur-sm"></span>
+          <span className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-primary/10 blur-sm" />
 
           {collapsed ? (
             <ChevronRight size={16} className="relative z-10" />
