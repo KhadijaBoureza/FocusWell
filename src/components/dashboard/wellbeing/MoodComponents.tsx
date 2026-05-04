@@ -257,7 +257,7 @@ export const MoodHistory = ({ grouped, totalEntries, onDelete }: MoodHistoryProp
         No check-ins yet. Log your first mood above ✨
       </p>
     ) : (
-      <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+      <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin">
         {grouped.map(([day, dayEntries]) => (
           <div key={day}>
             <p className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground mb-2">
