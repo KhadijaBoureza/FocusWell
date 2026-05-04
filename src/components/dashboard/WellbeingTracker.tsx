@@ -50,6 +50,10 @@ const WellbeingTracker = ({ onNavigate }: WellbeingTrackerProps) => {
     };
 
     loadWellbeing();
+
+    const interval = setInterval(loadWellbeing, 3000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const moodValueToLabel = (mood: MoodValue) => {
@@ -62,6 +66,21 @@ const WellbeingTracker = ({ onNavigate }: WellbeingTrackerProps) => {
     };
 
     return labels[mood];
+  };
+
+  const moodAverageToLabel = (value: string) => {
+    if (value === "—") return "—";
+
+    const rounded = Math.round(Number(value)) as MoodValue;
+    const mood = {
+      1: "Awful",
+      2: "Low",
+      3: "Okay",
+      4: "Good",
+      5: "Great",
+    }[rounded];
+
+    return mood ?? "—";
   };
 
   const logMood = async () => {
@@ -117,8 +136,6 @@ const WellbeingTracker = ({ onNavigate }: WellbeingTrackerProps) => {
     }
 
     if (lockOnSave && hasPasscode) {
-      // We need the passcode to encrypt, but we only stored its hash.
-      // Ask the user to enter it once, then encrypt.
       setPcDialog({ open: true, mode: "unlock", entryId: "__pending_save__" });
       return;
     }
@@ -368,8 +385,8 @@ const WellbeingTracker = ({ onNavigate }: WellbeingTrackerProps) => {
 
       <MoodTrendChart
         chartData={chartData}
-        todayAvg={todayAvg}
-        weekAvg={weekAvg}
+        todayAvg={moodAverageToLabel(todayAvg)}
+        weekAvg={moodAverageToLabel(weekAvg)}
         totalLogs={entries.length}
       />
 
