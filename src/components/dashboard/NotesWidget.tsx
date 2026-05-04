@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Plus,
   Trash2,
   Edit3,
@@ -18,6 +24,7 @@ import {
   Sun,
   CalendarRange,
   Infinity as InfinityIcon,
+  ChevronDown,
 } from "lucide-react";
 import {
   Note,
@@ -168,9 +175,7 @@ function NotesWidget() {
 
     const updated = await res.json();
 
-    setItems((prev) =>
-      prev.map((i) => (i._id === item._id ? updated : i))
-    );
+    setItems((prev) => prev.map((i) => (i._id === item._id ? updated : i)));
 
     setEditingId(null);
     reset();
@@ -191,7 +196,11 @@ function NotesWidget() {
 
     if (kind !== tab) return false;
 
-    if (tab === "wish" && filterHorizon !== "all" && i.horizon !== filterHorizon) {
+    if (
+      tab === "wish" &&
+      filterHorizon !== "all" &&
+      i.horizon !== filterHorizon
+    ) {
       return false;
     }
 
@@ -227,11 +236,10 @@ function NotesWidget() {
       <div className="flex gap-1 mb-3 p-1 bg-muted/30 rounded-lg">
         <button
           onClick={() => setTab("wish")}
-          className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1 rounded-md text-xs font-mono transition-all ${
-            tab === "wish"
-              ? "bg-primary/15 text-primary"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
+          className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1 rounded-md text-xs font-mono transition-all ${tab === "wish"
+            ? "bg-primary/15 text-primary"
+            : "text-muted-foreground hover:text-foreground"
+            }`}
         >
           <Sparkles size={12} />
           Aspirations
@@ -239,11 +247,10 @@ function NotesWidget() {
 
         <button
           onClick={() => setTab("note")}
-          className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1 rounded-md text-xs font-mono transition-all ${
-            tab === "note"
-              ? "bg-primary/15 text-primary"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
+          className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1 rounded-md text-xs font-mono transition-all ${tab === "note"
+            ? "bg-primary/15 text-primary"
+            : "text-muted-foreground hover:text-foreground"
+            }`}
         >
           <StickyNote size={12} />
           Notes
@@ -252,20 +259,74 @@ function NotesWidget() {
 
       {tab === "wish" && (
         <div className="mb-3">
-          <select
-            value={filterHorizon}
-            onChange={(e) =>
-              setFilterHorizon(e.target.value as Horizon | "all")
-            }
-            className="w-full bg-background/50 border border-border rounded-md px-2 py-1.5 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-          >
-            <option value="all">All time horizons</option>
-            {HORIZONS.map((h) => (
-              <option key={h.key} value={h.key}>
-                {h.label}
-              </option>
-            ))}
-          </select>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="
+    flex w-full items-center justify-between
+    rounded-md border border-neon-violet/40
+    bg-white dark:bg-black
+    px-2 py-1.5
+    text-left text-xs font-mono text-foreground
+    transition-all
+    hover:border-neon-violet hover:bg-muted/40 dark:hover:bg-zinc-800
+    focus:outline-none focus:ring-1 focus:ring-neon-violet
+  ">
+                <span>
+                  {filterHorizon === "all"
+                    ? "All time horizons"
+                    : horizonOf(filterHorizon).label}
+                </span>
+                <ChevronDown size={13} className="text-muted-foreground" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="start"
+              className="
+    w-[var(--radix-dropdown-menu-trigger-width)]
+    border border-neon-violet/40
+    bg-white dark:bg-black
+    text-black dark:text-white
+    shadow-lg
+  "
+            >
+              {/* ALL */}
+              <DropdownMenuItem
+                onClick={() => setFilterHorizon("all")}
+                className="
+      cursor-pointer text-xs font-mono
+      text-black dark:text-white
+      hover:text-black dark:hover:text-white
+      focus:text-black dark:focus:text-white
+      hover:bg-muted/50 dark:hover:bg-zinc-800
+      focus:bg-muted/50 dark:focus:bg-zinc-800
+      data-[highlighted]:text-black dark:data-[highlighted]:text-white
+      data-[highlighted]:bg-muted/50 dark:data-[highlighted]:bg-zinc-800
+    "
+              >
+                All time horizons
+              </DropdownMenuItem>
+
+              {/* OPTIONS */}
+              {HORIZONS.map((h) => (
+                <DropdownMenuItem
+                  key={h.key}
+                  onClick={() => setFilterHorizon(h.key)}
+                  className="
+        cursor-pointer text-xs font-mono
+        text-black dark:text-white
+        hover:text-black dark:hover:text-white
+        focus:text-black dark:focus:text-white
+        hover:bg-muted/50 dark:hover:bg-zinc-800
+        focus:bg-muted/50 dark:focus:bg-zinc-800
+        data-[highlighted]:text-black dark:data-[highlighted]:text-white
+        data-[highlighted]:bg-muted/50 dark:data-[highlighted]:bg-zinc-800
+      "
+                >
+                  {h.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       )}
 
@@ -276,10 +337,10 @@ function NotesWidget() {
               <select
                 value={selectedArea}
                 onChange={(e) => setSelectedArea(e.target.value as LifeArea)}
-                className="bg-background/50 border border-border rounded-md px-2 py-1.5 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                className="bg-black border border-border rounded-md px-2 py-1.5 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
               >
                 {LIFE_AREAS.map((a) => (
-                  <option key={a.key} value={a.key}>
+                  <option className="bg-black text-foreground" key={a.key} value={a.key}>
                     {a.label}
                   </option>
                 ))}
@@ -288,10 +349,10 @@ function NotesWidget() {
               <select
                 value={selectedHorizon}
                 onChange={(e) => setSelectedHorizon(e.target.value as Horizon)}
-                className="bg-background/50 border border-border rounded-md px-2 py-1.5 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                className="bg-black border border-border rounded-md px-2 py-1.5 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
               >
                 {HORIZONS.map((h) => (
-                  <option key={h.key} value={h.key}>
+                  <option className="bg-black text-foreground" key={h.key} value={h.key}>
                     {h.label}
                   </option>
                 ))}
@@ -324,17 +385,15 @@ function NotesWidget() {
                 <button
                   key={c}
                   onClick={() => setSelectedColor(c)}
-                  className={`w-5 h-5 rounded-full border-2 transition-all ${
-                    c === "violet"
-                      ? "bg-neon-violet"
-                      : c === "blue"
-                        ? "bg-neon-blue"
-                        : "bg-neon-cyan"
-                  } ${
-                    selectedColor === c
+                  className={`w-5 h-5 rounded-full border-2 transition-all ${c === "violet"
+                    ? "bg-neon-violet"
+                    : c === "blue"
+                      ? "bg-neon-blue"
+                      : "bg-neon-cyan"
+                    } ${selectedColor === c
                       ? "border-foreground scale-125"
                       : "border-transparent"
-                  }`}
+                    }`}
                 />
               ))}
             </div>
@@ -367,11 +426,9 @@ function NotesWidget() {
           return (
             <div
               key={item._id}
-              className={`border-l-2 ${
-                colorMap[item.color] || "border-l-neon-violet"
-              } bg-muted/20 rounded-r-md p-3 group ${
-                item.done ? "opacity-60" : ""
-              }`}
+              className={`border-l-2 ${colorMap[item.color] || "border-l-neon-violet"
+                } bg-muted/20 rounded-r-md p-3 group ${item.done ? "opacity-60" : ""
+                }`}
             >
               {editingId === item._id ? (
                 <div className="space-y-2">
@@ -382,10 +439,10 @@ function NotesWidget() {
                         onChange={(e) =>
                           setSelectedArea(e.target.value as LifeArea)
                         }
-                        className="bg-background/50 border border-border rounded px-2 py-1 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                        className="bg-black border border-border rounded px-2 py-1 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                       >
                         {LIFE_AREAS.map((a) => (
-                          <option key={a.key} value={a.key}>
+                          <option className="bg-black text-foreground" key={a.key} value={a.key}>
                             {a.label}
                           </option>
                         ))}
@@ -396,10 +453,10 @@ function NotesWidget() {
                         onChange={(e) =>
                           setSelectedHorizon(e.target.value as Horizon)
                         }
-                        className="bg-background/50 border border-border rounded px-2 py-1 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                        className="bg-black border border-border rounded px-2 py-1 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                       >
                         {HORIZONS.map((h) => (
-                          <option key={h.key} value={h.key}>
+                          <option className="bg-black text-foreground" key={h.key} value={h.key}>
                             {h.label}
                           </option>
                         ))}
@@ -426,17 +483,15 @@ function NotesWidget() {
                         <button
                           key={c}
                           onClick={() => setSelectedColor(c)}
-                          className={`w-4 h-4 rounded-full border-2 transition-all ${
-                            c === "violet"
-                              ? "bg-neon-violet"
-                              : c === "blue"
-                                ? "bg-neon-blue"
-                                : "bg-neon-cyan"
-                          } ${
-                            selectedColor === c
+                          className={`w-4 h-4 rounded-full border-2 transition-all ${c === "violet"
+                            ? "bg-neon-violet"
+                            : c === "blue"
+                              ? "bg-neon-blue"
+                              : "bg-neon-cyan"
+                            } ${selectedColor === c
                               ? "border-foreground scale-125"
                               : "border-transparent"
-                          }`}
+                            }`}
                         />
                       ))}
                     </div>
@@ -468,9 +523,8 @@ function NotesWidget() {
                       )}
 
                       <h4
-                        className={`text-sm font-semibold text-foreground ${
-                          item.done ? "line-through" : ""
-                        }`}
+                        className={`text-sm font-semibold text-foreground ${item.done ? "line-through" : ""
+                          }`}
                       >
                         {item.title}
                       </h4>
@@ -483,11 +537,10 @@ function NotesWidget() {
                           title={
                             item.done ? "Mark as open" : "Mark as fulfilled"
                           }
-                          className={`p-1 ${
-                            item.done
-                              ? "text-neon-green"
-                              : "text-muted-foreground hover:text-neon-green"
-                          }`}
+                          className={`p-1 ${item.done
+                            ? "text-neon-green"
+                            : "text-muted-foreground hover:text-neon-green"
+                            }`}
                         >
                           <Check size={12} />
                         </button>
