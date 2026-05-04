@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
+
 type EventType = "meeting" | "interview" | "schedule" | "event";
 
 interface CalendarEvent {
@@ -33,6 +34,7 @@ const EVENT_LABELS: Record<EventType, string> = {
 };
 
 const CalendarWidget = () => {
+  const [eventError, setEventError] = useState("");
   const [currentDate, setCurrentDate] = useState(new Date());
   // const [events, setEvents] = useLocalStorage<CalendarEvent[]>("focuswell-events", []);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -110,6 +112,7 @@ const CalendarWidget = () => {
     events.filter((e) => e.date === dateKey(day));
 
   const handleDayClick = (day: number) => {
+    setEventError("");
     setSelectedDate(dateKey(day));
     const dayEvents = getEventsForDay(day);
 
@@ -138,6 +141,27 @@ const CalendarWidget = () => {
   }
   async function handleAddEvent() {
     if (!newEvent.title.trim() || !selectedDate) return;
+    setEventError("");
+
+    const selectedDayEvents = events.filter((e) => e.date === selectedDate);
+
+    const duplicateTime = selectedDayEvents.some(
+      (e) => e.time === newEvent.time
+    );
+
+    if (duplicateTime) {
+      setEventError(
+        "You already have an event at this time. Try another slot so your day has room to breathe."
+      );
+      return;
+    }
+
+    if (selectedDayEvents.length >= 9) {
+      setEventError(
+        "This day already has 9 events. For your wellbeing, we suggest using Notes or Reminders for smaller tasks."
+      );
+      return;
+    }
 
     const res = await fetch("http://localhost:5000/events", {
       method: "POST",
@@ -153,6 +177,11 @@ const CalendarWidget = () => {
     });
 
     const savedEventRaw = await res.json();
+
+    if (!res.ok) {
+      setEventError(savedEventRaw.error || "Could not add event.");
+      return;
+    }
 
     const savedEvent = {
       ...savedEventRaw,
@@ -253,7 +282,7 @@ const CalendarWidget = () => {
                     {day}
                     {dayEvents.length > 0 && (
                       <span className="absolute -bottom-3.5 left-1/2 w-5 -translate-x-1/2 grid grid-cols-3 justify-items-center gap-y-0.5">
-                        {dayEvents.slice(0, 6).map((e, idx) => (
+                        {dayEvents.slice(0, 9).map((e, idx) => (
                           <span
                             key={idx}
                             className={`w-1 h-1 rounded-full ${EVENT_COLORS[e.type]}`}
@@ -280,7 +309,11 @@ const CalendarWidget = () => {
               {selectedDateFormatted}
             </DialogDescription>
           </DialogHeader>
-
+          {eventError && (
+            <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+              {eventError}
+            </p>
+          )}
           <div className="space-y-4 mt-2">
             <div>
               <label className="text-xs font-mono text-muted-foreground mb-1 block">
