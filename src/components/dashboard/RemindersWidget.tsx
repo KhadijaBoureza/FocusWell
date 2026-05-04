@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Bell,
   Plus,
@@ -14,6 +14,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Reminder {
   _id: string;
@@ -32,6 +38,12 @@ interface EventItem {
   type: "meeting" | "interview" | "schedule" | "event";
 }
 
+const TIME_OPTIONS = Array.from({ length: 24 * 2 }, (_, i) => {
+  const h = Math.floor(i / 2);
+  const m = i % 2 === 0 ? "00" : "30";
+  return `${String(h).padStart(2, "0")}:${m}`;
+});
+
 function RemindersWidget() {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [events, setEvents] = useState<EventItem[]>([]);
@@ -41,9 +53,7 @@ function RemindersWidget() {
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
   );
-
   const [datePickerOpen, setDatePickerOpen] = useState(false);
-  const timeInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -93,9 +103,7 @@ function RemindersWidget() {
 
   function isPastReminder(dateStr: string, timeStr: string) {
     const reminderDateTime = new Date(`${dateStr}T${timeStr}:00`);
-    const now = new Date();
-
-    return reminderDateTime < now;
+    return reminderDateTime < new Date();
   }
 
   function isPastDate(dateStr: string) {
@@ -231,7 +239,6 @@ function RemindersWidget() {
   });
 
   return (
-
     <div className="glass-card neon-border-blue p-6 h-[393px] flex flex-col overflow-hidden">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
@@ -281,6 +288,7 @@ function RemindersWidget() {
                     const year = date.getFullYear();
                     const month = String(date.getMonth() + 1).padStart(2, "0");
                     const day = String(date.getDate()).padStart(2, "0");
+
                     setSelectedDate(`${year}-${month}-${day}`);
                     setError("");
                     setDatePickerOpen(false);
@@ -290,28 +298,41 @@ function RemindersWidget() {
               </PopoverContent>
             </Popover>
 
-            <button
-              type="button"
-              onClick={() => {
-                timeInputRef.current?.showPicker?.();
-                timeInputRef.current?.focus();
-              }}
-              className="relative flex items-center gap-2 rounded-xl border border-cyan-400/50 bg-background/60 px-3 py-2 text-xs font-mono text-foreground shadow-[0_0_12px_rgba(34,211,238,0.10)] transition-all hover:border-cyan-400/80 hover:bg-muted/40"
-            >
-              <Clock size={13} className="text-cyan-400" />
-              {formatDisplayTime(time)}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center gap-2 rounded-xl border border-cyan-400/50 bg-white dark:bg-black px-3 py-2 text-xs font-mono text-foreground shadow-[0_0_12px_rgba(34,211,238,0.10)] transition-all hover:border-cyan-400/80 hover:bg-muted/40 dark:hover:bg-zinc-800 focus:outline-none focus:ring-1 focus:ring-cyan-400"
+                >
+                  <Clock size={13} className="text-cyan-400" />
+                  {formatDisplayTime(time)}
+                </button>
+              </DropdownMenuTrigger>
 
-              <input
-                ref={timeInputRef}
-                type="time"
-                value={time}
-                onChange={(e) => {
-                  setTime(e.target.value);
-                  setError("");
-                }}
-                className="sr-only"
-              />
-            </button>
+              <DropdownMenuContent
+                align="start"
+                className="
+    max-h-60 overflow-y-auto scrollbar-thin
+    border border-cyan-400/40
+    bg-white dark:bg-black
+    text-black dark:text-white
+    shadow-lg
+  "
+              >
+                {TIME_OPTIONS.map((t) => (
+                  <DropdownMenuItem
+                    key={t}
+                    onClick={() => {
+                      setTime(t);
+                      setError("");
+                    }}
+                    className="cursor-pointer text-xs font-mono text-black hover:text-black focus:text-black hover:bg-muted/50 focus:bg-muted/50 data-[highlighted]:bg-muted/50 data-[highlighted]:text-black dark:text-white dark:hover:text-white dark:focus:text-white dark:hover:bg-zinc-800 dark:focus:bg-zinc-800 dark:data-[highlighted]:bg-zinc-800 dark:data-[highlighted]:text-white"
+                  >
+                    {formatDisplayTime(t)}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             <button
               onClick={addReminder}
@@ -322,6 +343,7 @@ function RemindersWidget() {
               Add
             </button>
           </div>
+
           {error && (
             <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
               {error}
@@ -330,7 +352,7 @@ function RemindersWidget() {
         </div>
       )}
 
-      <div className="space-y-3 max-h-[300px] overflow-y-auto scrollbar-thin flex-1">
+      <div className="space-y-3 max-h-[180px] overflow-y-auto scrollbar-thin flex-1">
         {sortedReminders.map((reminder) => (
           <div
             key={reminder._id}
@@ -340,8 +362,8 @@ function RemindersWidget() {
             <button
               onClick={() => toggleReminder(reminder)}
               className={`shrink-0 w-5 h-5 mt-0.5 rounded-full border-2 flex items-center justify-center transition-all ${reminder.completed
-                ? "border-neon-green bg-neon-green/20"
-                : "border-muted-foreground hover:border-primary"
+                  ? "border-neon-green bg-neon-green/20"
+                  : "border-muted-foreground hover:border-primary"
                 }`}
             >
               {reminder.completed && (
@@ -352,8 +374,8 @@ function RemindersWidget() {
             <div className="flex-1 min-w-0">
               <p
                 className={`text-sm ${reminder.completed
-                  ? "line-through text-muted-foreground"
-                  : "text-foreground"
+                    ? "line-through text-muted-foreground"
+                    : "text-foreground"
                   }`}
               >
                 {reminder.title}
@@ -382,8 +404,8 @@ function RemindersWidget() {
                       : "Add to calendar"
                   }
                   className={`p-1 rounded transition-all ${isInCalendar(reminder)
-                    ? "text-primary opacity-60 cursor-default"
-                    : "text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-primary"
+                      ? "text-primary opacity-60 cursor-default"
+                      : "text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-primary"
                     }`}
                   disabled={isInCalendar(reminder)}
                 >
