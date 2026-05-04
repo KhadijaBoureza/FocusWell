@@ -46,48 +46,48 @@ const CalendarWidget = () => {
   });
 
   useEffect(() => {
-  fetchEvents();
+    fetchEvents();
 
-  function handleCalendarEventAdded(e: Event) {
-    const custom = e as CustomEvent;
-    const eventItem = custom.detail;
+    function handleCalendarEventAdded(e: Event) {
+      const custom = e as CustomEvent;
+      const eventItem = custom.detail;
 
-    if (!eventItem) return;
+      if (!eventItem) return;
 
-    setEvents((prev) => {
-      const exists = prev.some(
-        (item) =>
-          item.title === eventItem.title &&
-          item.date === eventItem.date &&
-          item.time === eventItem.time
-      );
+      setEvents((prev) => {
+        const exists = prev.some(
+          (item) =>
+            item.title === eventItem.title &&
+            item.date === eventItem.date &&
+            item.time === eventItem.time
+        );
 
-      if (exists) return prev;
+        if (exists) return prev;
 
-      return [
-        {
-          ...eventItem,
-          id: eventItem.id || eventItem._id,
-        },
-        ...prev,
-      ];
-    });
-  }
+        return [
+          {
+            ...eventItem,
+            id: eventItem.id || eventItem._id,
+          },
+          ...prev,
+        ];
+      });
+    }
 
-  window.addEventListener("calendar:event-added", handleCalendarEventAdded);
-  window.addEventListener("reminders:changed", fetchEvents);
+    window.addEventListener("calendar:event-added", handleCalendarEventAdded);
+    window.addEventListener("reminders:changed", fetchEvents);
 
-  return () => {
-    window.removeEventListener("calendar:event-added", handleCalendarEventAdded);
-    window.removeEventListener("reminders:changed", fetchEvents);
+    return () => {
+      window.removeEventListener("calendar:event-added", handleCalendarEventAdded);
+      window.removeEventListener("reminders:changed", fetchEvents);
+    };
+  }, []);
+  const EVENT_COLORS: Record<EventType, string> = {
+    meeting: "bg-primary/80",
+    interview: "bg-accent",
+    schedule: "bg-primary",
+    event: "bg-muted-foreground",
   };
-}, []);
-const EVENT_COLORS: Record<EventType, string> = {
-  meeting: "bg-primary/80",
-  interview: "bg-accent",
-  schedule: "bg-primary",
-  event: "bg-muted-foreground",
-};
 
   const today = new Date();
   const year = currentDate.getFullYear();
@@ -121,21 +121,21 @@ const EVENT_COLORS: Record<EventType, string> = {
       setShowAddDialog(true);
     }
   };
-  
+
   async function fetchEvents() {
-  try {
-    const res = await fetch("http://localhost:5000/events");
-    const data = await res.json();
-    setEvents(
-      data.map((e: any) => ({
-        ...e,
-        id: e.id || e._id,
-      }))
-    );
-  } catch (err) {
-    console.error(err);
+    try {
+      const res = await fetch("http://localhost:5000/events");
+      const data = await res.json();
+      setEvents(
+        data.map((e: any) => ({
+          ...e,
+          id: e.id || e._id,
+        }))
+      );
+    } catch (err) {
+      console.error(err);
+    }
   }
-}
   async function handleAddEvent() {
     if (!newEvent.title.trim() || !selectedDate) return;
 
@@ -246,14 +246,14 @@ const EVENT_COLORS: Record<EventType, string> = {
                   <button
                     onClick={() => handleDayClick(day)}
                     className={`w-6 h-6 rounded-full text-[12px] font-mono transition-all relative ${isToday(day)
-                        ? "bg-primary text-primary-foreground neon-glow-violet"
-                        : "text-foreground hover:bg-muted"
+                      ? "bg-primary text-primary-foreground neon-glow-violet"
+                      : "text-foreground hover:bg-muted"
                       }`}
                   >
                     {day}
                     {dayEvents.length > 0 && (
-                      <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 flex gap-0.5">
-                        {dayEvents.slice(0, 3).map((e, idx) => (
+                      <span className="absolute -bottom-3.5 left-1/2 w-5 -translate-x-1/2 grid grid-cols-3 justify-items-center gap-y-0.5">
+                        {dayEvents.slice(0, 6).map((e, idx) => (
                           <span
                             key={idx}
                             className={`w-1 h-1 rounded-full ${EVENT_COLORS[e.type]}`}
