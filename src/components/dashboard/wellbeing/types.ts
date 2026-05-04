@@ -2,12 +2,13 @@ import type { EncryptedPayload } from "@/lib/journalCrypto";
 
 export type MoodValue = 1 | 2 | 3 | 4 | 5;
 
+
 export interface MoodEntry {
   _id: string;
   mood: MoodValue;
+  label: string;
   timestamp: string;
 }
-
 export interface JournalEntry {
   _id: string;
   text: string;
