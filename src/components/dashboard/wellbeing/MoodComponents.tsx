@@ -8,9 +8,8 @@ import {
   type MoodValue,
 } from "./types";
 
-// ============================================================
-// Mood check-in
-// ============================================================
+const getMoodInfo = (value: number) =>
+  MOODS.find((m) => m.value === Math.round(value)) ?? MOODS[2];
 
 interface MoodCheckInProps {
   selected: MoodValue | null;
@@ -24,6 +23,7 @@ export const MoodCheckIn = ({ selected, onSelect, onLog }: MoodCheckInProps) => 
       <Heart size={18} className="text-primary" />
       <h2 className="font-mono text-lg font-semibold text-foreground">How is your mood today?</h2>
     </div>
+
     <p className="text-sm text-muted-foreground mb-5">
       Quick check-in. Log as many times as you'd like throughout the day.
     </p>
@@ -58,10 +58,6 @@ export const MoodCheckIn = ({ selected, onSelect, onLog }: MoodCheckInProps) => 
   </div>
 );
 
-// ============================================================
-// Mood support panel
-// ============================================================
-
 interface MoodSupportPanelProps {
   mood: MoodValue;
   onDismiss: () => void;
@@ -78,35 +74,35 @@ export const MoodSupportPanel = ({
   onShowTechniques,
 }: MoodSupportPanelProps) => {
   const moodInfo = MOODS.find((m) => m.value === mood)!;
-  const isAwful = mood === 1;
-  const isLow = mood === 2;
-  const isOkay = mood === 3;
-  const isGood = mood === 4;
-  const isGreat = mood === 5;
 
-  const headline = isAwful
-    ? "I'm sorry to hear that."
-    : isLow
-    ? "That's okay. Be gentle with yourself."
-    : isOkay
-    ? "Logged. Hope it lifts."
-    : isGood
-    ? "Glad to hear it. Keep going."
-    : "That's what I love to hear.";
+  const headline =
+    mood === 1
+      ? "I'm sorry to hear that."
+      : mood === 2
+        ? "That's okay. Be gentle with yourself."
+        : mood === 3
+          ? "Logged. Hope it lifts."
+          : mood === 4
+            ? "Glad to hear it. Keep going."
+            : "That's what I love to hear.";
 
-  const subline = isAwful
-    ? "Pin a worry to your dashboard, write a journal entry, or try a quick reset technique."
-    : isLow
-    ? "Pin what's bothering you, write it out in the journal, or try a breathing exercise."
-    : isOkay
-    ? "Pin a quick thought, journal what's on your mind, or take a short reset."
-    : isGood
-    ? "Whatever you're doing — keep at it. Journal what's working, or take a creative break."
-    : isGreat
-    ? "Hold onto this. Journal what's working and lean into more of it."
-    : null;
+  const subline =
+    mood === 1
+      ? "Pin a worry to your dashboard, write a journal entry, or try a quick reset technique."
+      : mood === 2
+        ? "Pin what's bothering you, write it out in the journal, or try a breathing exercise."
+        : mood === 3
+          ? "Pin a quick thought, journal what's on your mind, or take a short reset."
+          : mood === 4
+            ? "Whatever you're doing — keep at it. Journal what's working, or take a creative break."
+            : "Hold onto this. Journal what's working and lean into more of it.";
 
-  const borderClass = isAwful || isLow ? "neon-border-pink" : isOkay ? "neon-border-blue" : "neon-border-green";
+  const borderClass =
+    mood === 1 || mood === 2
+      ? "neon-border-pink"
+      : mood === 3
+        ? "neon-border-blue"
+        : "neon-border-green";
 
   return (
     <div className={`glass-card ${borderClass} p-6 animate-fade-in relative`}>
@@ -123,7 +119,7 @@ export const MoodSupportPanel = ({
         <h3 className="font-mono text-base font-semibold text-foreground">{headline}</h3>
       </div>
 
-      {subline && <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{subline}</p>}
+      <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{subline}</p>
 
       <div className="mt-4 flex flex-wrap gap-2">
         {onNavigate && (
@@ -135,6 +131,7 @@ export const MoodSupportPanel = ({
             Pin to Thoughts
           </button>
         )}
+
         <button
           onClick={onWriteJournal}
           className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-secondary/15 text-secondary hover:bg-secondary/25 transition-all font-mono text-xs"
@@ -142,6 +139,7 @@ export const MoodSupportPanel = ({
           <Pencil size={14} />
           Write journal
         </button>
+
         <button
           onClick={onShowTechniques}
           className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-muted/40 text-foreground border border-border hover:bg-muted/60 transition-all font-mono text-xs"
@@ -151,7 +149,7 @@ export const MoodSupportPanel = ({
         </button>
       </div>
 
-      {(isAwful || isLow) && (
+      {(mood === 1 || mood === 2) && (
         <p className="text-[11px] text-muted-foreground mt-4 pt-4 border-t border-border leading-relaxed">
           If things feel really heavy, talking to someone helps — a friend, a relative, or a crisis line in your country. You are not alone.
         </p>
@@ -159,10 +157,6 @@ export const MoodSupportPanel = ({
     </div>
   );
 };
-
-// ============================================================
-// Mood trend chart
-// ============================================================
 
 interface MoodTrendChartProps {
   chartData: { day: string; mood: number | null; key: string }[];
@@ -185,10 +179,12 @@ export const MoodTrendChart = ({ chartData, todayAvg, weekAvg, totalLogs }: Mood
         <p className="font-mono text-xl font-bold text-foreground">{todayAvg}</p>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Today Avg</p>
       </div>
+
       <div className="text-center p-2 rounded-lg bg-muted/30">
         <p className="font-mono text-xl font-bold text-foreground">{weekAvg}</p>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Week Avg</p>
       </div>
+
       <div className="text-center p-2 rounded-lg bg-muted/30">
         <p className="font-mono text-xl font-bold text-foreground">{totalLogs}</p>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Logs</p>
@@ -199,20 +195,24 @@ export const MoodTrendChart = ({ chartData, todayAvg, weekAvg, totalLogs }: Mood
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+
           <XAxis
             dataKey="day"
             tick={{ fontSize: 11, fontFamily: "JetBrains Mono", fill: "hsl(var(--muted-foreground))" }}
             axisLine={false}
             tickLine={false}
           />
+
           <YAxis
             domain={[1, 5]}
             ticks={[1, 2, 3, 4, 5]}
-            tick={{ fontSize: 11, fontFamily: "JetBrains Mono", fill: "hsl(var(--muted-foreground))" }}
+            tickFormatter={(value) => getMoodInfo(Number(value)).label}
+            tick={{ fontSize: 10, fontFamily: "JetBrains Mono", fill: "hsl(var(--muted-foreground))" }}
             axisLine={false}
             tickLine={false}
-            width={25}
+            width={45}
           />
+
           <Tooltip
             contentStyle={{
               background: "hsl(var(--card))",
@@ -222,8 +222,12 @@ export const MoodTrendChart = ({ chartData, todayAvg, weekAvg, totalLogs }: Mood
               fontFamily: "JetBrains Mono",
               color: "hsl(var(--foreground))",
             }}
-            formatter={(v: number) => [v.toFixed(2), "Mood"]}
+            formatter={(v: number) => {
+              const mood = getMoodInfo(v);
+              return [`${mood.emoji} ${mood.label}`, "Mood"];
+            }}
           />
+
           <Line
             type="monotone"
             dataKey="mood"
@@ -239,10 +243,6 @@ export const MoodTrendChart = ({ chartData, todayAvg, weekAvg, totalLogs }: Mood
   </div>
 );
 
-// ============================================================
-// Mood history
-// ============================================================
-
 interface MoodHistoryProps {
   grouped: [string, MoodEntry[]][];
   totalEntries: number;
@@ -251,7 +251,10 @@ interface MoodHistoryProps {
 
 export const MoodHistory = ({ grouped, totalEntries, onDelete }: MoodHistoryProps) => (
   <div className="glass-card neon-border-pink p-6">
-    <h2 className="font-mono text-lg font-semibold text-foreground mb-4">Recent Check-ins</h2>
+    <h2 className="font-mono text-lg font-semibold text-foreground mb-4">
+      Recent Check-ins
+    </h2>
+
     {totalEntries === 0 ? (
       <p className="text-sm text-muted-foreground text-center py-8">
         No check-ins yet. Log your first mood above ✨
@@ -263,9 +266,11 @@ export const MoodHistory = ({ grouped, totalEntries, onDelete }: MoodHistoryProp
             <p className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground mb-2">
               {formatDay(dayEntries[0].timestamp)}
             </p>
+
             <div className="space-y-1.5">
               {dayEntries.map((e) => {
-                const mood = MOODS.find((m) => m.value === e.mood)!;
+                const mood = getMoodInfo(e.mood);
+
                 return (
                   <div
                     key={e._id}
@@ -273,13 +278,18 @@ export const MoodHistory = ({ grouped, totalEntries, onDelete }: MoodHistoryProp
                   >
                     <div className="flex items-center gap-3">
                       <span className="text-xl">{mood.emoji}</span>
+
                       <div>
-                        <p className="text-sm font-medium text-foreground">{mood.label}</p>
+                        <p className="text-sm font-medium text-foreground">
+                          {e.label ?? mood.label}
+                        </p>
+
                         <p className="text-[11px] font-mono text-muted-foreground">
                           {formatDay(e.timestamp)} · {formatTime(e.timestamp)}
                         </p>
                       </div>
                     </div>
+
                     <button
                       onClick={() => onDelete(e._id)}
                       className="opacity-0 group-hover:opacity-100 p-1.5 text-muted-foreground hover:text-destructive transition-all"
