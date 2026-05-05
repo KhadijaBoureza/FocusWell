@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { LogOut } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { Task } from "@/types/dashboard";
 import DashboardSidebar from "../components/dashboard/DashboardSidebar";
 import ThemeToggle from "../components/dashboard/ThemeToggle";
@@ -18,13 +21,33 @@ import WellbeingTracker from "@/components/dashboard/WellbeingTracker";
 import MoodCheckInCompact from "@/components/dashboard/MoodCheckInCompact";
 import BadgeCelebration from "@/components/dashboard/BadgeCelebration";
 
-
-
 function Index() {
+  const navigate = useNavigate();
+
   const [tasks, setTasks] = useState<Task[]>([]);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [analyticsRefreshKey, setAnalyticsRefreshKey] = useState(0);
-  
+
+  const handleLogout = async () => {
+    const token = localStorage.getItem("focuswell-token");
+
+    try {
+      if (token) {
+        await fetch("http://localhost:5000/auth/logout", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      localStorage.removeItem("focuswell-token");
+      localStorage.removeItem("focuswell-user");
+      navigate("/auth");
+    }
+  };
 
   useEffect(() => {
     const loadTasks = async () => {
@@ -147,12 +170,11 @@ function Index() {
                 </>
               ) : (
                 <span className="capitalize">
-                  {activeTab === "analytics"
-                    ? "Weekly Analytics"
-                    : activeTab}
+                  {activeTab === "analytics" ? "Weekly Analytics" : activeTab}
                 </span>
               )}
             </h1>
+
             <p className="text-sm text-muted-foreground mt-0.5">
               {activeTab === "dashboard"
                 ? "Welcome to your mind's command center"
@@ -160,8 +182,12 @@ function Index() {
             </p>
           </div>
 
-          {/* 👉 RIGHT SIDE CONTROLS */}
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleLogout}>
+              <LogOut size={14} />
+              <span className="hidden sm:inline">Log out</span>
+            </Button>
+
             <ThemeToggle />
           </div>
         </header>
