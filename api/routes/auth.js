@@ -1,6 +1,9 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
+
 const User = require("../models/User");
+const Session = require("../models/Session");
 
 const {
   isValidObjectId,
@@ -9,11 +12,29 @@ const {
   isValidPassword,
 } = require("../utils/validators");
 
+const { requireAuth } = require("../middleware/authMiddleware");
+
 const router = express.Router();
+
+function safeUser(user) {
+  return {
+    id: user._id,
+    displayName: user.displayName,
+    email: user.email,
+  };
+}
+
+function createToken() {
+  return crypto.randomBytes(32).toString("hex");
+}
 
 router.post("/register", async (req, res) => {
   try {
-    const missing = requireFields(req.body, ["displayName", "email", "password"]);
+    const missing = requireFields(req.body, [
+      "displayName",
+      "email",
+      "password",
+    ]);
 
     if (missing.length > 0) {
       return res.status(400).json({
@@ -26,11 +47,15 @@ router.post("/register", async (req, res) => {
     const password = req.body.password;
 
     if (!isValidEmail(email)) {
-      return res.status(400).json({ error: "Please enter a valid email address" });
+      return res.status(400).json({
+        error: "Please enter a valid email address",
+      });
     }
 
     if (!isValidPassword(password)) {
-      return res.status(400).json({ error: "Password must be at least 6 characters" });
+      return res.status(400).json({
+        error: "Password must be at least 6 characters",
+      });
     }
 
     const existingUser = await User.findOne({ email });
@@ -49,13 +74,18 @@ router.post("/register", async (req, res) => {
       password: hashedPassword,
     });
 
+    const token = createToken();
+
+    await Session.create({
+      userId: user._id,
+      token,
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+    });
+
     res.status(201).json({
       message: "Account created successfully",
-      user: {
-        id: user._id,
-        displayName: user.displayName,
-        email: user.email,
-      },
+      token,
+      user: safeUser(user),
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -76,11 +106,15 @@ router.post("/login", async (req, res) => {
     const password = req.body.password;
 
     if (!isValidEmail(email)) {
-      return res.status(400).json({ error: "Please enter a valid email address" });
+      return res.status(400).json({
+        error: "Please enter a valid email address",
+      });
     }
 
     if (!isValidPassword(password)) {
-      return res.status(400).json({ error: "Password must be at least 6 characters" });
+      return res.status(400).json({
+        error: "Password must be at least 6 characters",
+      });
     }
 
     const user = await User.findOne({ email });
@@ -95,17 +129,37 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
+    const token = createToken();
+
+    await Session.create({
+      userId: user._id,
+      token,
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+    });
+
     res.json({
       message: "Signed in successfully",
-      user: {
-        id: user._id,
-        displayName: user.displayName,
-        email: user.email,
-      },
+      token,
+      user: safeUser(user),
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+router.get("/me", requireAuth, async (req, res) => {
+  res.json({
+    user: req.user,
+  });
+});
+
+router.post("/logout", requireAuth, async (req, res) => {
+  await Session.findByIdAndDelete(req.session._id);
+
+  res.json({
+    success: true,
+    message: "Logged out successfully",
+  });
 });
 
 router.get("/user/:id", async (req, res) => {
@@ -132,11 +186,15 @@ router.delete("/user/:id", async (req, res) => {
       return res.status(400).json({ error: "Invalid user id" });
     }
 
-    const deleted = await User.findByIdAndDelete(req.params.id).select("-password");
+    const deleted = await User.findByIdAndDelete(req.params.id).select(
+      "-password"
+    );
 
     if (!deleted) {
       return res.status(404).json({ error: "User not found" });
     }
+
+    await Session.deleteMany({ userId: deleted._id });
 
     res.json({
       success: true,
