@@ -223,200 +223,201 @@ function KanbanBoard({
   }
 
   return (
-    <div className="glass-card neon-border-blue p-6 h-[470px] flex flex-col overflow-hidden">
-      <h2 className="mb-4 font-mono text-lg font-semibold text-foreground">
-        Task Board
-      </h2>
+  <div className="glass-card neon-border-blue p-6 h-[470px] flex flex-col overflow-hidden">
+    <h2 className="mb-4 font-mono text-lg font-semibold text-foreground shrink-0">
+      Task Board
+    </h2>
 
-      <div className="grid grid-cols-1 gap-4 h-[470px]  md:grid-cols-3">
-        {COLUMNS.map((col) => (
-          <div
-            key={col.id}
-            onDragOver={handleDragOver}
-            onDrop={() => handleDrop(col.id)}
-            className="min-h-[200px] rounded-lg bg-muted/30 p-3"
-          >
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className={`font-mono text-sm font-semibold ${col.colorClass}`}>
-                {col.title}
-                <span className="ml-2 text-muted-foreground">
-                  {tasks.filter((t) => t.column === col.id).length}
-                </span>
-              </h3>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1 min-h-0">
+      {COLUMNS.map((col) => (
+        <div
+          key={col.id}
+          onDragOver={handleDragOver}
+          onDrop={() => handleDrop(col.id)}
+          className="min-w-0 rounded-lg bg-muted/30 p-3 flex flex-col overflow-hidden"
+        >
+          <div className="mb-3 flex items-center justify-between shrink-0">
+            <h3 className={`font-mono text-sm font-semibold ${col.colorClass}`}>
+              {col.title}
+              <span className="ml-2 text-muted-foreground">
+                {tasks.filter((t) => t.column === col.id).length}
+              </span>
+            </h3>
 
-              <button
-                onClick={() => {
-                  if (addingTo === col.id) {
-                    resetAddTask();
-                  } else {
-                    setAddingTo(col.id);
-                    setNewTaskTitle("");
-                    setSelectedPriority("medium");
-                    setEditingTaskId(null);
-                  }
-                }}
-                className="rounded p-1 text-muted-foreground transition-colors hover:text-foreground"
-                type="button"
-              >
-                {addingTo === col.id ? <X size={16} /> : <Plus size={16} />}
-              </button>
-            </div>
+            <button
+              onClick={() => {
+                if (addingTo === col.id) {
+                  resetAddTask();
+                } else {
+                  setAddingTo(col.id);
+                  setNewTaskTitle("");
+                  setSelectedPriority("medium");
+                  setEditingTaskId(null);
+                }
+              }}
+              className="rounded p-1 text-muted-foreground transition-colors hover:text-foreground"
+              type="button"
+            >
+              {addingTo === col.id ? <X size={16} /> : <Plus size={16} />}
+            </button>
+          </div>
 
-            {addingTo === col.id && (
-              <div
-                ref={addTaskContainerRef}
-                className="mb-3 space-y-2"
-                onKeyDown={(e) => handleAddTaskKeyDown(e, col.id)}
-              >
-                <input
-                  ref={addTaskInputRef}
-                  value={newTaskTitle}
-                  onChange={(e) => setNewTaskTitle(e.target.value)}
-                  placeholder="Task title..."
-                  className="w-full rounded-md border border-border bg-background/50 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                />
+          {addingTo === col.id && (
+            <div
+              ref={addTaskContainerRef}
+              className="mb-3 space-y-2 shrink-0"
+              onKeyDown={(e) => handleAddTaskKeyDown(e, col.id)}
+            >
+              <input
+                ref={addTaskInputRef}
+                value={newTaskTitle}
+                onChange={(e) => setNewTaskTitle(e.target.value)}
+                placeholder="Task title..."
+                className="w-full rounded-md border border-border bg-background/50 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              />
 
-                <div className="flex gap-2">
-                  {(["low", "medium", "high"] as TaskPriority[]).map(
-                    (priority) => (
-                      <button
-                        key={priority}
-                        type="button"
-                        onClick={() => setSelectedPriority(priority)}
-                        className={`rounded px-2 py-1 text-[10px] font-mono capitalize transition-all ${priorityColors[priority]
-                          } ${selectedPriority === priority
-                            ? "scale-105 ring-1 ring-foreground"
-                            : "opacity-80 hover:opacity-100"
-                          }`}
-                      >
-                        {priority}
-                      </button>
-                    )
-                  )}
-                </div>
-              </div>
-            )}
-
-            <div className="max-h-[320px] space-y-2 overflow-y-auto pr-1 scrollbar-thin">
-              {tasks
-                .filter((t) => t.column === col.id)
-                .map((task) => (
-                  <div
-                    key={task._id}
-                    draggable={editingTaskId !== task._id}
-                    onDragStart={() => handleDragStart(task._id)}
-                    className={`group cursor-grab rounded-md border border-border/50 bg-card p-3 transition-all hover:border-primary/30 active:cursor-grabbing ${draggedTask === task._id ? "opacity-50" : ""
-                      }`}
+              <div className="flex gap-2">
+                {(["low", "medium", "high"] as TaskPriority[]).map((priority) => (
+                  <button
+                    key={priority}
+                    type="button"
+                    onClick={() => setSelectedPriority(priority)}
+                    className={`rounded px-2 py-1 text-[10px] font-mono capitalize transition-all ${
+                      priorityColors[priority]
+                    } ${
+                      selectedPriority === priority
+                        ? "scale-105 ring-1 ring-foreground"
+                        : "opacity-80 hover:opacity-100"
+                    }`}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1 overflow-hidden">
-                        {editingTaskId === task._id ? (
-                          <div className="space-y-2">
-                            <input
-                              value={editTitle}
-                              onChange={(e) => setEditTitle(e.target.value)}
-                              className="w-full rounded-md border border-border bg-background/50 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                            />
+                    {priority}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
-                            <div className="flex gap-2">
-                              {(["low", "medium", "high"] as TaskPriority[]).map(
-                                (priority) => (
-                                  <button
-                                    key={priority}
-                                    type="button"
-                                    onClick={() => setEditPriority(priority)}
-                                    className={`rounded px-2 py-1 text-[10px] font-mono capitalize transition-all ${priorityColors[priority]
-                                      } ${editPriority === priority
-                                        ? "scale-105 ring-1 ring-foreground"
-                                        : "opacity-80 hover:opacity-100"
-                                      }`}
-                                  >
-                                    {priority}
-                                  </button>
-                                )
-                              )}
-                            </div>
-                          </div>
-                        ) : (
-                          <>
-                            <p
-                              className={`text-sm break-words whitespace-normal ${task.completed
-                                  ? "line-through text-muted-foreground"
-                                  : "text-foreground"
-                                }`}
-                            >
-                              {task.title}
-                            </p>
+          <div className="flex-1 min-h-0 space-y-2 overflow-y-auto pr-1 scrollbar-thin">
+            {tasks
+              .filter((t) => t.column === col.id)
+              .map((task) => (
+                <div
+                  key={task._id}
+                  draggable={editingTaskId !== task._id}
+                  onDragStart={() => handleDragStart(task._id)}
+                  className={`group relative w-full cursor-grab rounded-md border border-border/50 bg-card p-3 transition-all hover:border-primary/30 active:cursor-grabbing ${
+                    draggedTask === task._id ? "opacity-50" : ""
+                  }`}
+                >
+                  {editingTaskId === task._id ? (
+                    <div className="space-y-2 pr-16">
+                      <input
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        className="w-full rounded-md border border-border bg-background/50 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                      />
 
-                            <span
-                              className={`mt-1 inline-block rounded px-2 py-0.5 text-[10px] font-mono capitalize ${priorityColors[task.priority] ||
-                                "bg-muted text-muted-foreground"
-                                }`}
-                            >
-                              {task.priority}
-                            </span>
-                          </>
-                        )}
-                      </div>
-
-                      <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                        {editingTaskId === task._id ? (
-                          <>
+                      <div className="flex gap-2">
+                        {(["low", "medium", "high"] as TaskPriority[]).map(
+                          (priority) => (
                             <button
-                              onClick={() => saveEdit(task._id)}
-                              className="p-1 text-neon-green hover:text-neon-green/80"
+                              key={priority}
                               type="button"
+                              onClick={() => setEditPriority(priority)}
+                              className={`rounded px-2 py-1 text-[10px] font-mono capitalize transition-all ${
+                                priorityColors[priority]
+                              } ${
+                                editPriority === priority
+                                  ? "scale-105 ring-1 ring-foreground"
+                                  : "opacity-80 hover:opacity-100"
+                              }`}
                             >
-                              <Save size={14} />
+                              {priority}
                             </button>
-
-                            <button
-                              onClick={cancelEdit}
-                              className="p-1 text-muted-foreground hover:text-foreground"
-                              type="button"
-                            >
-                              <X size={14} />
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <button
-                              onClick={() => startEdit(task)}
-                              className="p-1 text-muted-foreground hover:text-foreground"
-                              type="button"
-                            >
-                              <Pencil size={14} />
-                            </button>
-
-                            {col.id !== "done" && (
-                              <button
-                                onClick={() => moveTask(task._id, "done")}
-                                className="p-1 text-neon-green hover:text-neon-green/80"
-                                type="button"
-                              >
-                                <Check size={14} />
-                              </button>
-                            )}
-
-                            <button
-                              onClick={() => deleteTask(task._id)}
-                              className="p-1 text-destructive hover:text-destructive/80"
-                              type="button"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </>
+                          )
                         )}
                       </div>
                     </div>
+                  ) : (
+                    <>
+                      <p
+                        className={`text-sm leading-snug whitespace-normal break-normal pr-16 ${
+                          task.completed
+                            ? "line-through text-muted-foreground"
+                            : "text-foreground"
+                        }`}
+                      >
+                        {task.title}
+                      </p>
+
+                      <span
+                        className={`mt-2 inline-block rounded px-2 py-0.5 text-[10px] font-mono capitalize ${
+                          priorityColors[task.priority] ||
+                          "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {task.priority}
+                      </span>
+                    </>
+                  )}
+
+                  <div className="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                    {editingTaskId === task._id ? (
+                      <>
+                        <button
+                          onClick={() => saveEdit(task._id)}
+                          className="p-1 text-neon-green hover:text-neon-green/80"
+                          type="button"
+                        >
+                          <Save size={14} />
+                        </button>
+
+                        <button
+                          onClick={cancelEdit}
+                          className="p-1 text-muted-foreground hover:text-foreground"
+                          type="button"
+                        >
+                          <X size={14} />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => startEdit(task)}
+                          className="p-1 text-muted-foreground hover:text-foreground"
+                          type="button"
+                        >
+                          <Pencil size={14} />
+                        </button>
+
+                        {col.id !== "done" && (
+                          <button
+                            onClick={() => moveTask(task._id, "done")}
+                            className="p-1 text-neon-green hover:text-neon-green/80"
+                            type="button"
+                          >
+                            <Check size={14} />
+                          </button>
+                        )}
+
+                        <button
+                          onClick={() => deleteTask(task._id)}
+                          className="p-1 text-destructive hover:text-destructive/80"
+                          type="button"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </>
+                    )}
                   </div>
-                ))}
-            </div>
+                </div>
+              ))}
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
     </div>
-  );
+  </div>
+);
 }
 
 export default KanbanBoard;

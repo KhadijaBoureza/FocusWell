@@ -352,7 +352,7 @@ function RemindersWidget() {
         </div>
       )}
 
-      <div className="space-y-3 max-h-[180px] overflow-y-auto scrollbar-thin flex-1">
+      <div className="flex-1 min-h-0 space-y-3 overflow-y-auto pr-1 scrollbar-thin">
         {sortedReminders.map((reminder) => (
           <div
             key={reminder._id}
@@ -362,8 +362,8 @@ function RemindersWidget() {
             <button
               onClick={() => toggleReminder(reminder)}
               className={`shrink-0 w-5 h-5 mt-0.5 rounded-full border-2 flex items-center justify-center transition-all ${reminder.completed
-                  ? "border-neon-green bg-neon-green/20"
-                  : "border-muted-foreground hover:border-primary"
+                ? "border-neon-green bg-neon-green/20"
+                : "border-muted-foreground hover:border-primary"
                 }`}
             >
               {reminder.completed && (
@@ -373,7 +373,7 @@ function RemindersWidget() {
 
             <div className="flex-1 min-w-0">
               <p
-                className={`text-sm ${reminder.completed
+                className={`text-sm leading-snug whitespace-normal break-normal ${reminder.completed
                     ? "line-through text-muted-foreground"
                     : "text-foreground"
                   }`}
@@ -404,8 +404,8 @@ function RemindersWidget() {
                       : "Add to calendar"
                   }
                   className={`p-1 rounded transition-all ${isInCalendar(reminder)
-                      ? "text-primary opacity-60 cursor-default"
-                      : "text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-primary"
+                    ? "text-primary opacity-60 cursor-default"
+                    : "text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-primary"
                     }`}
                   disabled={isInCalendar(reminder)}
                 >
