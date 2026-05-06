@@ -151,7 +151,7 @@ export const MoodSupportPanel = ({
 
       {(mood === 1 || mood === 2) && (
         <p className="text-[11px] text-muted-foreground mt-4 pt-4 border-t border-border leading-relaxed">
-          If things feel really heavy, talking to someone helps — a friend, a relative, or a crisis line in your country. You are not alone.
+          If things feel really heavy, talking to someone helps . A friend, a relative, or a crisis line in your country. You are not alone.
         </p>
       )}
     </div>
