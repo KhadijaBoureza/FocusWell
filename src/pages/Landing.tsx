@@ -142,17 +142,27 @@ const Landing = () => {
               focus on, when to rest  stays yours.
             </p>
 
+
             <p>
               Deep-work tools like the Pomodoro timer and Kanban board pair with
               reflective ones: a private journal, mood check-ins and a thought organiser.
             </p>
 
+
             <p>
-              Privacy is the foundation. Your notes, journal entries and habits belong to
-              you not to a feed, not to an advertiser. FocusWell stays quiet and out of
-              the way.
+              FocusWell is not a medical or clinical tool. Its wellbeing features are for
+              reflection, organisation and self-awareness only.
             </p>
-          </div>
+            <div className="md:col-span-2">
+              <div className="my-3 border-t border-gray-400/40" />
+
+              <p>
+                Privacy is the foundation. Your notes, journal entries and habits belong to
+                you  not to a feed, not to an advertiser. FocusWell stays quiet and out of
+                the way.
+              </p>
+            </div>
+             </div>
         </section>
 
         <section className="space-y-4">
