@@ -51,9 +51,9 @@ const WellbeingTracker = ({ onNavigate }: WellbeingTrackerProps) => {
 
     loadWellbeing();
 
-    const interval = setInterval(loadWellbeing, 3000);
+    // const interval = setInterval(loadWellbeing, 3000);
 
-    return () => clearInterval(interval);
+    // return () => clearInterval(interval);
   }, []);
 
   const moodValueToLabel = (mood: MoodValue) => {
@@ -154,31 +154,53 @@ const WellbeingTracker = ({ onNavigate }: WellbeingTrackerProps) => {
 
     // SETUP mode: create or replace passcode hash
     if (pcDialog.mode === "setup") {
-      const hash = await hashPasscode(code);
-      await api.saveJournalPasscode(hash);
-      setPasscodeHash(hash);
-      toast({ title: "Passcode set", description: "Locked entries will be encrypted with this code." });
+      try {
+        console.log("Setup passcode started");
 
-      if (pcDialog.intent === "save-locked") {
-        // continue saving the pending entry encrypted
-        const text = standaloneJournal.trim();
-        if (text) {
-          try {
-            const encrypted = await encryptText(text, code);
-            persistJournal({
+        const hash = await hashPasscode(code);
+        console.log("Hash generated:", hash);
 
-              text: "",
-              locked: true,
-              encrypted,
-              timestamp: new Date().toISOString(),
-            });
-          } catch {
-            toast({ title: "Could not save locked entry", variant: "destructive" });
+        const saved = await api.saveJournalPasscode(hash);
+        console.log("Backend response:", saved);
+
+        setPasscodeHash(saved.passcodeHash ?? hash);
+        setLockOnSave(true);
+
+        toast({
+          title: "Passcode set",
+          description: "Locked entries will be encrypted with this code.",
+        });
+
+        if (pcDialog.intent === "save-locked") {
+          const text = standaloneJournal.trim();
+
+          if (text) {
+            try {
+              const encrypted = await encryptText(text, code);
+
+              await persistJournal({
+                text: "",
+                locked: true,
+                encrypted,
+                timestamp: new Date().toISOString(),
+              });
+            } catch (err) {
+              console.error("Could not save locked entry:", err);
+              toast({
+                title: "Could not save locked entry",
+                variant: "destructive",
+              });
+            }
           }
         }
+
+        setPcDialog({ open: false });
+        return;
+      } catch (err) {
+        console.error("Passcode setup failed:", err);
+        setPcError("Could not save passcode. Check the browser console.");
+        return;
       }
-      setPcDialog({ open: false });
-      return;
     }
 
     // UNLOCK mode: verify hash, then either save pending or unlock entry

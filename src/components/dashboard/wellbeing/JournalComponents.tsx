@@ -334,11 +334,11 @@ export const JournalCard = ({
     </p>
 
     <Textarea
-      value={draft}
-      onChange={(e) => onDraftChange(e.target.value)}
-      placeholder="What's on your mind today?"
-      className="min-h-[120px] bg-muted/30 border-border focus-visible:border-primary/40 resize-none text-sm mb-3"
-    />
+  value={draft}
+  onChange={(e) => onDraftChange(e.target.value)}
+  placeholder="What's on your mind today?"
+  className="min-h-[120px] bg-muted/30 border-border focus-visible:border-primary/40 resize-none text-sm mb-3"
+/>
 
     <div className="flex items-center justify-between gap-3 flex-wrap">
       <label
@@ -573,7 +573,7 @@ export const PasscodeDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onCancel()}>
-      <DialogContent>
+      <DialogContent className="bg-white text-foreground border border-border shadow-xl dark:bg-zinc-950">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <KeyRound size={16} className="text-primary" />
@@ -638,12 +638,15 @@ export const PasscodeDialog = ({
           </button>
 
           <button
-            onClick={handleSubmit}
-            disabled={!canSubmit}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-mono text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-all"
-          >
-            {buttonLabel}
-          </button>
+  onClick={() => {
+    console.log("Set passcode button clicked");
+    handleSubmit();
+  }}
+  disabled={!canSubmit}
+  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-mono text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-all"
+>
+  {buttonLabel}
+</button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
