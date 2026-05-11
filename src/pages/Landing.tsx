@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "@/components/dashboard/ThemeToggle";
@@ -24,7 +24,7 @@ import {
 const features = [
   { icon: ListTodo, label: "Kanban tasks", desc: "Drag-and-drop boards with live priority counters.", color: "text-primary" },
   { icon: Clock, label: "Pomodoro timer", desc: "High-precision focus sessions with mindful breaks.", color: "text-neon-blue" },
-  { icon: Calendar, label: "Calendar", desc: "Up to 9 cooured events per day at a glance.", color: "text-neon-cyan" },
+  { icon: Calendar, label: "Calendar", desc: "Up to 9 coloured events per day at a glance.", color: "text-neon-cyan" },
   { icon: Bell, label: "Reminders", desc: "Push any reminder straight to your calendar.", color: "text-neon-pink" },
   { icon: StickyNote, label: "Quick notes", desc: "Capture ideas as colour-coded sticky notes.", color: "text-primary" },
   { icon: Brain, label: "Thought organiser", desc: "Structure scattered thoughts in one calm place.", color: "text-neon-blue" },
@@ -41,12 +41,43 @@ const stats = [
   { label: "Yours", value: "100%", icon: CheckCircle2, color: "text-neon-blue" },
 ];
 
+const hasAuthToken = () => {
+  return (
+    Boolean(localStorage.getItem("focuswell-token")) &&
+    Boolean(localStorage.getItem("focuswell-user"))
+  );
+};
+
 const Landing = () => {
   const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     document.title = "FocusWell. Your mind's command centre";
+
+    const updateAuthState = () => {
+      setIsLoggedIn(hasAuthToken());
+    };
+
+    updateAuthState();
+
+    window.addEventListener("storage", updateAuthState);
+    window.addEventListener("focus", updateAuthState);
+    window.addEventListener("auth-change", updateAuthState);
+
+    return () => {
+      window.removeEventListener("storage", updateAuthState);
+      window.removeEventListener("focus", updateAuthState);
+      window.removeEventListener("auth-change", updateAuthState);
+    };
   }, []);
+
+  const openDemo = () => {
+  localStorage.removeItem("focuswell-token");
+  localStorage.removeItem("focuswell-user");
+  window.dispatchEvent(new Event("auth-change"));
+  navigate("/demo");
+};
 
   return (
     <div className="min-h-screen bg-background">
@@ -63,13 +94,21 @@ const Landing = () => {
         <div className="flex items-center gap-2">
           <ThemeToggle />
 
-          <Button variant="ghost" size="sm" onClick={() => navigate("/auth")}>
-            Sign in
-          </Button>
+          {isLoggedIn ? (
+            <Button size="sm" onClick={() => navigate("/app")}>
+              Open dashboard <ArrowRight size={14} />
+            </Button>
+          ) : (
+            <>
+              <Button variant="ghost" size="sm" onClick={() => navigate("/auth")}>
+                Sign in
+              </Button>
 
-          <Button size="sm" onClick={() => navigate("/app")}>
-            Open dashboard <ArrowRight size={14} />
-          </Button>
+              <Button size="sm" onClick={openDemo}>
+                Explore demo <ArrowRight size={14} />
+              </Button>
+            </>
+          )}
         </div>
       </header>
 
@@ -88,17 +127,25 @@ const Landing = () => {
 
               <p className="text-sm md:text-base text-muted-foreground max-w-xl">
                 One calm space for tasks, focus, journalling, calendar and reminders.
-                Built for digital wellbeing  your data, your pace, your rules.
+                Built for digital wellbeing — your data, your pace, your rules.
               </p>
 
               <div className="flex flex-wrap items-center gap-2 pt-2">
-                <Button onClick={() => navigate("/auth")} className="gap-2">
-                  Get started <ArrowRight size={14} />
-                </Button>
+                {isLoggedIn ? (
+                  <Button onClick={() => navigate("/app")} className="gap-2">
+                    Open dashboard <ArrowRight size={14} />
+                  </Button>
+                ) : (
+                  <>
+                    <Button onClick={() => navigate("/auth")} className="gap-2">
+                      Get started <ArrowRight size={14} />
+                    </Button>
 
-                <Button variant="outline" onClick={() => navigate("/app")}>
-                  Explore demo
-                </Button>
+                    <Button variant="outline" onClick={() => navigate("/demo")}>
+                      Explore demo
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
 
@@ -138,31 +185,30 @@ const Landing = () => {
 
             <p>
               Built on a simple belief: you don&apos;t need an algorithm to know what&apos;s good
-              for you. No AI suggestions, no nudges, no scoring. Every choice what to
-              focus on, when to rest  stays yours.
+              for you. No AI suggestions, no nudges, no scoring. Every choice — what to
+              focus on, when to rest — stays yours.
             </p>
-
 
             <p>
               Deep-work tools like the Pomodoro timer and Kanban board pair with
               reflective ones: a private journal, mood check-ins and a thought organiser.
             </p>
 
-
             <p>
               FocusWell is not a medical or clinical tool. Its wellbeing features are for
               reflection, organisation and self-awareness only.
             </p>
+
             <div className="md:col-span-2">
               <div className="my-3 border-t border-gray-400/40" />
 
               <p>
                 Privacy is the foundation. Your notes, journal entries and habits belong to
-                you  not to a feed, not to an advertiser. FocusWell stays quiet and out of
+                you — not to a feed, not to an advertiser. FocusWell stays quiet and out of
                 the way.
               </p>
             </div>
-             </div>
+          </div>
         </section>
 
         <section className="space-y-4">
@@ -200,8 +246,11 @@ const Landing = () => {
             Free, private, and yours. Step into your command centre.
           </p>
 
-          <Button onClick={() => navigate("/auth")} className="gap-2">
-            Get started <ArrowRight size={14} />
+          <Button
+            onClick={() => navigate(isLoggedIn ? "/app" : "/auth")}
+            className="gap-2"
+          >
+            {isLoggedIn ? "Open dashboard" : "Get started"} <ArrowRight size={14} />
           </Button>
         </section>
 

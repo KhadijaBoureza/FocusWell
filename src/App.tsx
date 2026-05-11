@@ -10,6 +10,7 @@ import NotFound from "./pages/NotFound";
 import { TimerProvider } from "@/context/TimerContext";
 import Auth from "./pages/Auth";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import Demo from "./pages/Demo";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,8 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+
+               <Route path="/demo" element={<Demo/>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

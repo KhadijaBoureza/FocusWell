@@ -36,6 +36,7 @@ const Auth = () => {
 
         try {
             if (!email.trim()) {
+
                 toast.error("Please enter your email.");
                 return;
             }
@@ -76,7 +77,8 @@ const Auth = () => {
 
             localStorage.setItem("focuswell-token", data.token);
             localStorage.setItem("focuswell-user", JSON.stringify(data.user));
-
+            localStorage.setItem("focuswell-token", data.token);
+            window.dispatchEvent(new Event("auth-change"));
             toast.success(mode === "signin" ? "Welcome back!" : "Account created!");
             navigate("/app");
         } finally {
