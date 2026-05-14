@@ -102,15 +102,11 @@ npm install
 
 3. Start the frontend development server:
 
+
 npm run dev
 
 4. Open the browser using the URL shown in the terminal.
 
-Usually:
-
-http://localhost:5173
-
-OR
 
 http://localhost:8080
 
@@ -119,6 +115,7 @@ BACKEND SETUP
 ==================================================
 
 1. Open a second terminal inside the backend folder.
+cd npm 
 
 2. Install backend dependencies:
 
@@ -132,7 +129,7 @@ OR
 
 node server.js
 
-(depending on configuration)
+
 
 
 ==================================================
@@ -211,9 +208,8 @@ routes and authentication endpoints.
 VIDEO DEMONSTRATION
 ==================================================
 
-MMUTube / Kaltura Video Link:
-
-PASTE_VIDEO_LINK_HERE
+MMUTube Video Link:
+https://mmutube.mmu.ac.uk/media/t/1_fonabjjf
 
 
 ==================================================
